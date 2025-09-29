@@ -1,0 +1,179 @@
+<h2 mat-dialog-title>
+  {{ data.mode === "create" ? "Новое событие" : "Редактировать событие" }}
+</h2>
+
+<mat-dialog-content [formGroup]="form" style="padding: 8px 24px">
+  <div
+    style="
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+    "
+  >
+    <mat-form-field appearance="outline">
+      <mat-label>Заголовок</mat-label>
+      <input matInput formControlName="title" />
+      <mat-error *ngIf="form.controls.title.hasError('required')"
+        >Обязательное поле</mat-error
+      >
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Локация</mat-label>
+      <input matInput formControlName="location" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" style="grid-column: span 2">
+      <mat-label>Описание</mat-label>
+      <textarea matInput rows="3" formControlName="description"></textarea>
+    </mat-form-field>
+
+    <!-- Даты -->
+    <!-- <mat-form-field appearance="outline">
+      <mat-label>Дата начала</mat-label>
+      <input matInput [matDatepicker]="pickerStart" formControlName="dateStart">
+      <mat-datepicker-toggle matSuffix [for]="pickerStart"></mat-datepicker-toggle>
+      <mat-datepicker #pickerStart></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Дата окончания</mat-label>
+      <input matInput [matDatepicker]="pickerEnd" formControlName="dateEnd">
+      <mat-datepicker-toggle matSuffix [for]="pickerEnd"></mat-datepicker-toggle>
+      <mat-datepicker #pickerEnd></mat-datepicker>
+    </mat-form-field> -->
+
+    <!-- <mat-form-field appearance="outline" style="grid-column: span 2">
+      <mat-label>Дата</mat-label>
+      <mat-date-range-input [rangePicker]="picker" [formGroup]="form">
+        <input matStartDate formControlName="dateStart" placeholder="Начало" />
+        <input matEndDate formControlName="dateEnd" placeholder="Окончание" />
+      </mat-date-range-input>
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-date-range-picker #picker></mat-date-range-picker>
+    </mat-form-field> -->
+
+    <mat-form-field appearance="outline" style="grid-column: span 2">
+      <mat-label>Дата</mat-label>
+      <mat-date-range-input
+        [rangePicker]="picker"
+        [formGroup]="form"
+        (click)="picker.open()"
+        (focusin)="picker.open()"
+      >
+        <input matStartDate formControlName="dateStart" placeholder="Начало" readonly/>
+        <input matEndDate formControlName="dateEnd" placeholder="Окончание" readonly/>
+      </mat-date-range-input>
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-date-range-picker #picker></mat-date-range-picker>
+    </mat-form-field>
+
+    <div style="height: 78px">
+      <mat-slide-toggle
+        formControlName="allDay"
+        (change)="onAllDayToggle()"
+        style="white-space: nowrap"
+      >
+        Весь день
+      </mat-slide-toggle>
+      <div
+        *ngIf="form.hasError('range')"
+        style="
+          color: var(--mat-form-field-error-text-color, #f44336);
+          font-size: 12px;
+        "
+      >
+        Дата/время окончания должны быть позже начала
+      </div>
+    </div>
+
+    <!-- Время (отключается для allDay) -->
+    @if (!form.value.allDay) {
+    <div style="display: flex; gap: 12px; align-items: center">
+
+      <!-- <mat-form-field appearance="outline">
+        <mat-label>Время начала</mat-label>
+        <input
+          matInput
+          type="time"
+          formControlName="timeStart"
+          [disabled]="form.value.allDay!"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Время окончания</mat-label>
+        <input
+          matInput
+          type="time"
+          formControlName="timeEnd"
+          [disabled]="form.value.allDay!"
+        />
+      </mat-form-field> -->
+
+      <!-- Время начала -->
+      <mat-form-field appearance="outline">
+        <mat-label>Время начала</mat-label>
+        <input
+          matInput
+          formControlName="timeStart"
+          [matAutocomplete]="autoStart"
+          #startTrigger="matAutocompleteTrigger"
+          (focus)="startTrigger.openPanel()"
+          (click)="startTrigger.openPanel()"
+        />
+        <mat-autocomplete #autoStart="matAutocomplete">
+          <mat-option *ngFor="let t of allTimes" [value]="t">{{ t }}</mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+
+      <!-- Время окончания -->
+      <mat-form-field appearance="outline">
+        <mat-label>Время окончания</mat-label>
+        <input
+          matInput
+          formControlName="timeEnd"
+          [matAutocomplete]="autoEnd"
+          #endTrigger="matAutocompleteTrigger"
+          (focus)="endTrigger.openPanel()"
+          (click)="endTrigger.openPanel()"
+        />
+        <mat-autocomplete #autoEnd="matAutocomplete" class="time-panel">
+          <mat-option *ngFor="let o of endTimes()" [value]="o.value" >
+            {{ o.label }}
+            <!-- {{ o.value }} -->
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+
+    </div>
+    }
+
+    <!-- <div 
+         *ngIf="form.hasError('range')"
+         style="color:var(--mat-form-field-error-text-color,#f44336); font-size:12px; grid-column: span 2;">
+      Дата/время окончания должны быть позже начала
+    </div> -->
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" style="padding: 0 24px 12px 24px">
+  <button
+    mat-flat-button
+    color="primary"
+    [disabled]="form.invalid"
+    (click)="onSubmit()"
+  >
+    {{ data.mode === "create" ? "Создать" : "Сохранить" }}
+  </button>
+  <button mat-flat-button color="accent" (click)="close()">Отмена</button>
+  <button
+    *ngIf="data.mode === 'edit'"
+    mat-flat-button
+    color="warn"
+    (click)="remove()"
+  >
+    Удалить
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,26 @@
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+/* html {
+  font-family: sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: #1e1d20;
+  color: #ede8f7;
+} */
+
+/* панель лежит в Overlay, ширина задаётся на .cdk-overlay-pane */
+.cdk-overlay-pane .mat-mdc-autocomplete-panel.time-panel {
+  min-width: 200px;
+}
+
+/* перебиваем инлайн ширину, чтобы панель могла быть шире инпута */
+.cdk-overlay-pane:has(.mat-mdc-autocomplete-panel.time-panel) {
+  width: auto !important;      /* разрешаем шире инпута */
+  min-width: 200px !important; /* базовый минимум */
+}
+
+/* чтобы строки не ломались */
+.mat-mdc-autocomplete-panel.time-panel .mdc-list-item__primary-text {
+  white-space: nowrap;
+}

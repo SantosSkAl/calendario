@@ -1,0 +1,58 @@
+<h2 mat-dialog-title>{{ data.mode === 'create' ? 'Новое событие' : 'Редактировать событие' }}</h2>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="p-4 flex flex-col gap-4">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Заголовок</mat-label>
+      <input matInput formControlName="title" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Локация</mat-label>
+      <input matInput formControlName="location" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Описание</mat-label>
+      <textarea matInput formControlName="description" rows="3"></textarea>
+    </mat-form-field>
+
+    <!-- <label>Начало
+      <input type="datetime-local" formControlName="start" />
+    </label>
+
+    <label>Конец
+      <input type="datetime-local" formControlName="end" />
+    </label> -->
+
+    <div class="grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <mat-form-field appearance="outline">
+        <mat-label>Начало</mat-label>
+        <input matInput type="datetime-local" formControlName="start" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Конец</mat-label>
+        <input matInput type="datetime-local" formControlName="end" />
+      </mat-form-field>
+    </div>
+
+    <mat-checkbox formControlName="allDay">Весь день</mat-checkbox>
+
+    <!-- <div class="mt-2" style="display:flex; gap:8px; justify-content:flex-end">
+      <button type="submit" [disabled]="form.invalid">
+        {{ data.mode === 'create' ? 'Создать' : 'Сохранить' }}
+      </button>
+      <button type="button" (click)="close()">Отмена</button>
+      <button *ngIf="data.mode==='edit'" type="button" (click)="remove()">Удалить</button>
+    </div> -->
+
+    <div class="mt-2" style="display:flex; gap:8px; justify-content:flex-end">
+      <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
+        {{ data.mode === 'create' ? 'Создать' : 'Сохранить' }}
+      </button>
+      <button mat-button type="button" (click)="close()">Отмена</button>
+      <button *ngIf="data.mode==='edit'" mat-button color="warn" type="button" (click)="remove()">Удалить</button>
+    </div>
+
+  </form>
