@@ -4,7 +4,7 @@
 
 <div class='demo-app'>
 
-  <div class='demo-app-sidebar'>
+  <!-- <div class='demo-app-sidebar'>
     <div class='demo-app-sidebar-section'>
       <h2>Instructions</h2>
       <ul>
@@ -42,15 +42,113 @@
         </li>
       </ul>
     </div>
-  </div>
+  </div> -->
 
   <div class='demo-app-main'>
     <full-calendar *ngIf='calendarVisible()' [options]='calendarOptions()'>
       <ng-template #eventContent let-arg>
         <!-- <b>{{ arg.timeText }}</b> -->
-        <i>{{ arg.event.title }}</i>
+        <i class="truncate-1">{{ arg.event.title }}</i>
       </ng-template>
     </full-calendar>
   </div>
 
 </div>
+
+<!-- preview -->
+<!-- <ng-template #eventPopoverTpl let-$implicit>
+  <mat-card style="max-width: 360px;">
+    <mat-card-title>{{ $implicit.event.title }}</mat-card-title>
+    <mat-card-subtitle>
+      {{ $implicit.event.start | date:'dd MMM, HH:mm' }} — {{ $implicit.event.end | date:'dd MMM, HH:mm' }}
+    </mat-card-subtitle>
+    <mat-card-content>
+      <div *ngIf="$implicit.event.extendedProps?.location">
+        <mat-icon inline>place</mat-icon> {{ $implicit.event.extendedProps.location }}
+      </div>
+      <p *ngIf="$implicit.event.extendedProps?.description">{{ $implicit.event.extendedProps.description }}</p>
+    </mat-card-content>
+    <mat-card-actions align="end">
+      <button mat-stroked-button (click)="closeOverlay()">Закрыть</button>
+      <button mat-flat-button color="primary" (click)="onEditEvent($implicit); closeOverlay()">Редактировать</button>
+    </mat-card-actions>
+  </mat-card>
+</ng-template> -->
+
+<!-- preview -->
+<ng-template #eventPopoverTpl let-$implicit>
+  <mat-card class="event-popover">
+    <div class="event-popover__header">
+      <div class="event-popover__title truncate-1">{{ $implicit.event.title }}</div>
+
+      <span class="spacer"></span>
+
+      <!-- <div class="event-popover__actions"> -->
+        <button mat-icon-button
+                aria-label="Editar"
+                matTooltip="Editar"
+                (click)="onEditEvent($implicit); closeOverlay(); $event.stopPropagation()">
+          <mat-icon>edit</mat-icon>
+        </button>
+
+        <!-- <button mat-icon-button
+                aria-label="Удалить"
+                color="warn"
+                matTooltip="Удалить"
+                matTooltipPosition="above"
+                (click)="onDeleteEvent($implicit.event.id); closeOverlay(); $event.stopPropagation()">
+          <mat-icon>delete</mat-icon>
+        </button> -->
+
+        <button mat-icon-button
+                aria-label="Cancelar"
+                matTooltip="Cancelar"
+                (click)="closeOverlay(); $event.stopPropagation()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    <!-- </div> -->
+
+    <!-- <div class="event-popover__subtitle">
+      <b>Hora:</b>
+      {{ $implicit.event.start | date:'dd MMM, HH:mm' }}
+      <ng-container *ngIf="$implicit.event.end as end">
+        — {{ end | date:'dd MMM, HH:mm' }}
+      </ng-container>
+      <span *ngIf="$implicit.event.allDay"> (весь день)</span>
+    </div> -->
+
+    <div class="event-popover__subtitle">
+      <b>Fetcha & Hora:</b>
+      @if ($implicit.event.allDay) {
+        {{ $implicit.event.start | date:'dd MMM' }}
+        @if ($implicit.event.end) {
+          — {{ $implicit.event.end | date:'dd MMM' }}
+        }
+        (Todo el día)
+      } @else {
+        {{ $implicit.event.start | date:'dd MMM, HH:mm' }}
+        @if ($implicit.event.end) {
+          — {{ $implicit.event.end | date:'dd MMM, HH:mm' }}
+        }
+      } 
+      <!-- {{ $implicit.event.start | date:'dd MMM, HH:mm' }}
+      <ng-container *ngIf="$implicit.event.end as end">
+        — {{ end | date:'dd MMM, HH:mm' }}
+      </ng-container>
+      <span *ngIf="$implicit.event.allDay"> (Todo el día)</span> -->
+    </div>
+
+    <mat-card-content class="event-popover__content">
+      <div *ngIf="$implicit.event.extendedProps?.location" class="truncate-2">
+        <!-- <mat-icon inline>place</mat-icon> -->
+         <b>Ubicación:</b>
+        {{ $implicit.event.extendedProps.location }}
+      </div>
+      <p *ngIf="$implicit.event.extendedProps?.description" class="truncate-5 event-popover__can-wrap">
+        <b>Descripción:</b>
+        {{ $implicit.event.extendedProps.description }}
+      </p>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

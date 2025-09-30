@@ -7,16 +7,27 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import multiMonthPlugin from '@fullcalendar/multimonth';
-import { INITIAL_EVENTS, createEventId } from './event-utils';
+import { INITIAL_EVENTS, INITIAL_EVENTS_ES, createEventId } from './event-utils';
 import { NewTaskComponent } from "./new-task/new-task.component";
 import { EventFormData, NewEventComponent } from './new-event/new-event.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import esLocale from '@fullcalendar/core/locales/es';
 
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { TemplatePortal } from '@angular/cdk/portal';
+import { ViewChild, TemplateRef, ViewContainerRef } from '@angular/core';
+
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FullCalendarModule, MatDialogModule],
+  imports: [
+    CommonModule, FullCalendarModule, MatDialogModule,
+    MatCardModule, MatIconModule, MatButtonModule, MatTooltipModule
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -40,7 +51,7 @@ export class AppComponent {
       right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek,multiMonthYear'
     },
     initialView: 'dayGridMonth',
-    initialEvents: INITIAL_EVENTS, // alternatively, use the `events` setting to fetch from a feed
+    initialEvents: INITIAL_EVENTS_ES, // alternatively, use the `events` setting to fetch from a feed
     weekends: true,
     editable: true,
     selectable: true,
@@ -48,18 +59,31 @@ export class AppComponent {
     dayMaxEvents: true,
     select: this.handleDateSelect.bind(this),
     eventClick: this.handleEventClick.bind(this),
-    eventsSet: this.handleEvents.bind(this)
+    eventsSet: this.handleEvents.bind(this),
     /* you can update a remote database when these fire:
     eventAdd:
     eventChange:
     eventRemove:
     */
+    eventContent: (arg) => {
+      const title = document.createElement('div');
+      title.textContent = arg.event.title;
+      title.className = 'truncate-1';
+      return { domNodes: [title] };
+    }
   });
   currentEvents = signal<EventApi[]>([]);
   // isAddingTask = false
+  @ViewChild('eventPopoverTpl') eventPopoverTpl!: TemplateRef<any>;
+  private overlayRef?: OverlayRef;
+  private overlay = inject(Overlay);
+  private vcr = inject(ViewContainerRef);
 
-  constructor(private changeDetector: ChangeDetectorRef) {
-  }
+  constructor(
+    private changeDetector: ChangeDetectorRef,
+    // private overlay: Overlay,
+    // private vcr: ViewContainerRef
+  ) {}
 
   handleCalendarToggle() {
     this.calendarVisible.update((bool) => !bool);
@@ -149,7 +173,8 @@ export class AppComponent {
   // }
  
   // Поток «Редактирование события»
-  handleEventClick(clickInfo: EventClickArg) {
+  // handleEventClick(clickInfo: EventClickArg) {
+  onEditEvent(clickInfo: EventClickArg) {
     if (this.isDialogOpen() || this.dialog.openDialogs.length) return;
     this.isDialogOpen.set(true);
 
@@ -218,6 +243,52 @@ export class AppComponent {
         }
       });
   }
+
+  handleEventClick(arg: EventClickArg) {
+    arg.jsEvent.preventDefault();
+    this.closeOverlay();
+
+    const positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(arg.el)
+      .withViewportMargin(8)
+      .withPositions([
+        // { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top', offsetY: 8 },
+        // { originX: 'end', originY: 'center', overlayX: 'start', overlayY: 'center', offsetX: 8 },
+        // 1) Сверху (основной)
+        { originX: 'center', originY: 'top',    overlayX: 'center', overlayY: 'bottom', offsetY: -8 },
+        // 2) Снизу (fallback)
+        { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top',    offsetY:  8 },
+        // 3–4) Смещения по сторонам — на всякий
+        { originX: 'end',    originY: 'center', overlayX: 'start',  overlayY: 'center', offsetX:  8 },
+        { originX: 'start',  originY: 'center', overlayX: 'end',    overlayY: 'center', offsetX: -8 },
+      ]);
+
+    this.overlayRef = this.overlay.create({
+      positionStrategy,
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      scrollStrategy: this.overlay.scrollStrategies.close(),
+    });
+
+    // const data = arg.event.toPlainObject?.() ?? this.toPojo(arg.event);
+    // const data = arg
+    const portal = new TemplatePortal(this.eventPopoverTpl, this.vcr, { $implicit: arg });
+    this.overlayRef.attach(portal);
+    this.overlayRef.backdropClick().subscribe(() => this.closeOverlay());
+  }
+
+  // private toPojo(event: any) {
+  //   return {
+  //     id: event.id,
+  //     title: event.title,
+  //     start: event.start,
+  //     end: event.end,
+  //     allDay: event.allDay,
+  //     extendedProps: event.extendedProps ?? {}
+  //   };
+  // }
+
+  closeOverlay() { this.overlayRef?.dispose(); this.overlayRef = undefined; }
 
   handleEvents(events: EventApi[]) {
     this.currentEvents.set(events);

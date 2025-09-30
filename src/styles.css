@@ -1,13 +1,18 @@
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 /* html {
   font-family: sans-serif;
-}
+} */
 
-body {
+/* body {
   margin: 0;
   background-color: #1e1d20;
   color: #ede8f7;
 } */
+
+body {
+  margin: 0;
+  padding: 0;
+}
 
 /* панель лежит в Overlay, ширина задаётся на .cdk-overlay-pane */
 .cdk-overlay-pane .mat-mdc-autocomplete-panel.time-panel {
@@ -24,3 +29,44 @@ body {
 .mat-mdc-autocomplete-panel.time-panel .mdc-list-item__primary-text {
   white-space: nowrap;
 }
+
+/* панель может скроллиться внутри, если контента слишком много */
+/* .cdk-overlay-pane:has(.event-popover){
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+} */
+
+
+
+/* Универсально: позволяем контенту сжиматься */
+.fc .fc-event-main-frame,
+.fc .fc-event-main {
+  display: flex;
+  min-width: 0;
+}
+
+/* Элипсис на любом нашем узле внутри event-main (включая ng-template) */
+.fc .fc-event-main > * {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Специально для all-day/мульти-дня (blue bars в dayGrid) */
+.fc .fc-h-event .fc-event-main {
+  min-width: 0;
+}
+.fc .fc-h-event .fc-event-main > * {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* (Если используешь listView) */
+/* .fc .fc-list-event-title {
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+} */

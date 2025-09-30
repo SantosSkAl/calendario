@@ -23,6 +23,8 @@ b { /* used for event dates/times */
   min-height: 100%;
   font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
   font-size: 14px;
+  /* margin: 0; */
+  /* padding: 0; */
 }
 
 .demo-app-sidebar {
@@ -38,7 +40,7 @@ b { /* used for event dates/times */
 
 .demo-app-main {
   flex-grow: 1;
-  padding: 3em;
+  padding: 0.5em;
 }
 
 .fc { /* the calendar root */
@@ -46,3 +48,104 @@ b { /* used for event dates/times */
   margin: 0 auto;
 }
 
+.cdk-overlay-pane:has(.event-popover) {
+  width: auto !important;
+  max-width: 480px !important;
+}
+.mat-mdc-card { padding: 8px 12px; }
+.mat-mdc-card-title { margin-bottom: 4px; }
+.mat-mdc-card-subtitle { color: rgba(0,0,0,.6); }
+/* .mat-mdc-card-actions { padding: 8px 12px 12px; } */
+.mat-mdc-card-content { padding-bottom: 12px; }
+
+.event-popover { 
+  padding: 10px 12px 12px;
+  max-width: 480px;
+  min-width: 0;
+  background: #F7F7FA; /* #fff #FFF8E6  #F5F8FF #F7F7FA */
+  border: 1px solid color-mix(in oklab, #000 10%, var(--mdc-theme-primary) 30%);
+  box-shadow: 0 8px 24px rgba(0,0,0,.16);
+}
+/* чтобы flex-дети не «распирали» ширину */
+.event-popover * { min-width: 0; }
+/* длинные куски (URL/слова) разрешаем переносить, но только где нужно */
+.event-popover__can-wrap {
+  overflow-wrap: anywhere;
+  word-break: break-word; /* страховка для старых движков */
+}
+
+.event-popover__header {
+  display: flex; align-items: center; margin-bottom: 4px;
+}
+.event-popover__title { font-size: 18px; font-weight: 600; flex:1 1 auto; min-width:0; margin-right: 40px; }
+.event-popover__subtitle { color: rgba(0,0,0,.6); margin-bottom: 16px; }
+.event-popover__content { padding: 0; }
+.spacer { flex: 1; }
+.truncate-1 {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+.truncate-5 {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+
+/* (опционально) компактнее иконки, потребуется поправить центровку */
+/* .event-popover .mat-mdc-icon-button { --mdc-icon-button-state-layer-size: 32px; width: 32px; height: 32px; } */
+
+/* (опционально) "хвостик" у поповера. Добавь класс панели оверлея: this.overlayRef.addPanelClass('event-popover-panel') */
+.event-popover-panel::after {
+  content: ""; position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: -8px; /* когда панель над событием */
+  border: 8px solid transparent; border-top-color: #fff; /* цвет подложки карточки */
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.2));
+}
+
+/* Боремся со скроллом */
+.demo-app-main {
+  position: relative;
+  height: 96vh;
+  overflow: hidden; /* не даём появиться внешнему скроллу */
+}
+
+.demo-app-main full-calendar,
+.demo-app-main .fc {
+  height: 100%;
+}
+
+.gradient-top::before {
+  content: "";
+  position: absolute;
+  /* сверху, по ширине */
+  inset: 0 0 auto 0;
+  /* зона градиента */
+  height: 56px; 
+  /* pointer-events: none; */
+  /* z-index: 20; */
+
+  /* Светло-серый градиент сверху вниз */
+  /* мягкая часть до 80% высоты (32px) */
+  /* ускоряем спадание на последних 20% */
+  /* background: linear-gradient(
+    to bottom,
+    rgba(245, 245, 245, 0.95) 0%,
+    rgba(245, 245, 245, 0.80) 20%,
+    rgba(245, 245, 245, 0.60) 40%,
+    rgba(245, 245, 245, 0.40) 60%,
+    rgba(245, 245, 245, 0.22) 80%,
+    rgba(245, 245, 245, 0.08) 95%,
+    rgba(245, 245, 245, 0.00) 100%
+  ); */
+  /* background: rgba(213, 220, 233, 0.4); */
+}

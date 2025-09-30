@@ -15,6 +15,7 @@ import { MatIconModule }       from '@angular/material/icon';
 import { MatDatepickerModule }  from '@angular/material/datepicker';
 import { MatNativeDateModule, MAT_DATE_LOCALE }  from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { startWith } from 'rxjs';
 import { MatDateRangePicker } from '@angular/material/datepicker';
 // опционально, чтобы не думать про отписку:
@@ -70,7 +71,8 @@ export interface EventFormData {
     CommonModule, ReactiveFormsModule, MatDialogModule,
     MatFormFieldModule, MatInputModule, MatCheckboxModule,
     MatButtonModule, MatIconModule, MatSlideToggleModule,
-    MatDatepickerModule, MatNativeDateModule, MatAutocompleteModule
+    MatDatepickerModule, MatNativeDateModule,
+    MatAutocompleteModule, MatTooltipModule
   ],
   templateUrl: './new-event.component.html',
   styleUrl: './new-event.component.css',
@@ -87,11 +89,12 @@ export class NewEventComponent implements AfterViewInit {
   // вспомогательный флаг: «авто-конец равен началу» для allDay
   autoEnd = true;
   get isAllDay() { return !!this.form.value.allDay; }
+  protected TITLE_MAX = 100;
 
   form = this.fb.group({
     title: [ // оставляем вариант без блюра для мгновенной валидации
       this.data.title ?? '',
-      [Validators.required, Validators.maxLength(100)],
+      [Validators.required, Validators.maxLength(this.TITLE_MAX)],
     ],
     // title: [
     //   this.data.title ?? '', {
@@ -99,9 +102,15 @@ export class NewEventComponent implements AfterViewInit {
     //   updateOn: 'blur'
     // }],
     // location: [this.data.location ?? ''],
-    location: this.fb.control('', { updateOn: 'blur' }), // тут блюром уменьшаем "шум"
+    // location: this.fb.control('', { updateOn: 'blur' }), // тут блюром уменьшаем "шум"
+    location: this.fb.control(this.data.location ?? '', { updateOn: 'blur' }),
+    // location: [
+    //   this.data.location ?? '', {
+    //     updateOn: 'blur'
+    // }],
     // description: [this.data.description ?? ''],
-    description: this.fb.control('', { updateOn: 'blur' }), // тут блюром уменьшаем "шум"
+    // description: this.fb.control('', { updateOn: 'blur' }), // тут блюром уменьшаем "шум"
+    description: this.fb.control(this.data.description ?? '', { updateOn: 'blur' }),
     // start: [this.toLocalDatetime(this.data.start) ?? '', Validators.required],
     // end: [this.toLocalDatetime(this.data.end) ?? ''],
     // date: [this.initDate(), Validators.required],     // Date объект

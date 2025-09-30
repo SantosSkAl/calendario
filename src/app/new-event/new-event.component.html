@@ -1,6 +1,16 @@
-<h2 mat-dialog-title>
-  {{ data.mode === "create" ? "Nuevo evento" : "Editar evento" }}
-</h2>
+<div class="edit__title">
+  <h2 mat-dialog-title>
+    {{ data.mode === "create" ? "Nuevo evento" : "Editar evento" }}
+  </h2>
+  <button mat-icon-button
+          aria-label="Cancelar"
+          matTooltip="Cancelar"
+          matTooltipPosition="left"
+          (click)="close()"
+          style="margin-right: 10px; margin-top: 5px;">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
 
 <mat-dialog-content [formGroup]="form" style="padding: 8px 24px">
   <div
@@ -13,10 +23,13 @@
   >
     <mat-form-field appearance="outline">
       <mat-label>Título</mat-label>
-      <input matInput formControlName="title" />
-      <mat-error *ngIf="form.controls.title.hasError('required')"
-        >Campo obligatorio</mat-error
-      >
+      <input matInput formControlName="title" cdkFocusInitial />
+      <mat-error *ngIf="form.controls.title.hasError('required')">
+        Campo obligatorio
+      </mat-error>
+      <mat-error *ngIf="form.controls.title.hasError('maxlength')">
+        Máximo {{ TITLE_MAX }} caracteres
+      </mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
