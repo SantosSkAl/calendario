@@ -40,56 +40,62 @@
 </div>
 
 <!-- preview -->
-<ng-template #eventPopoverTpl let-$implicit>
-  <mat-card class="event-popover">
-    <div class="event-popover__header">
-      <div class="event-popover__title truncate-1">{{ $implicit.event.title }}</div>
+<!-- <ng-template #eventPopoverTpl let-$implicit> -->
+<p-overlayPanel #op [showCloseIcon]="true"
+                [dismissable]="true"
+                [style]="{maxWidth:'480px'}"
+                [appendTo]="'body'"
+                (onHide)="selectedEvent = null">
+  @if (selectedEvent?.event) {
+    <div class="event-popover p-card p-component">
+    
+      <div class="event-popover__header">
+        <div class="event-popover__title truncate-1">{{ selectedEvent?.event?.title }}</div>
+        <span class="spacer"></span>
 
-      <span class="spacer"></span>
-
-      <!-- <div class="event-popover__actions"> -->
-        <button mat-icon-button
-                aria-label="Editar"
-                matTooltip="Editar"
-                (click)="onEditEvent($implicit); closeOverlay(); $event.stopPropagation()">
-          <mat-icon>edit</mat-icon>
+        <!-- p-button + иконки primeicons -->
+        <button pButton type="button"
+                pTooltip="Editar"
+                icon="pi pi-pencil"
+                (click)="onEditEvent(selectedEvent!)">
         </button>
 
-        <button mat-icon-button
-                aria-label="Cancelar"
-                matTooltip="Cancelar"
-                (click)="closeOverlay(); $event.stopPropagation()">
-          <mat-icon>close</mat-icon>
+        <button pButton type="button"
+                pTooltip="Cancelar"
+                icon="pi pi-times"
+                (click)="op.hide()">
         </button>
       </div>
-    <!-- </div> -->
 
-    <div class="event-popover__subtitle">
-      <b>Fetcha & Hora:</b>
-      @if ($implicit.event.allDay) {
-        {{ $implicit.event.start | date:'dd MMM' }}
-        @if ($implicit.event.end) {
-          — {{ $implicit.event.end | date:'dd MMM' }}
+
+      <div class="event-popover__subtitle">
+        <b>Fetcha & Hora:</b>
+        @if (selectedEvent?.event?.allDay) {
+          {{ selectedEvent?.event?.start | date:'dd MMM' }}
+          @if (selectedEvent?.event?.end) {
+            — {{ selectedEvent?.event?.end | date:'dd MMM' }}
+          }
+          (Todo el día)
+        } @else {
+          {{ selectedEvent?.event?.start | date:'dd MMM, HH:mm' }}
+          @if (selectedEvent?.event?.end) {
+            — {{ selectedEvent?.event?.end | date:'dd MMM, HH:mm' }}
+          }
         }
-        (Todo el día)
-      } @else {
-        {{ $implicit.event.start | date:'dd MMM, HH:mm' }}
-        @if ($implicit.event.end) {
-          — {{ $implicit.event.end | date:'dd MMM, HH:mm' }}
-        }
-      }
+      </div>
+
+      <div class="event-popover__content">
+        <div *ngIf="selectedEvent!.event.extendedProps['location']" class="truncate-2">
+          <!-- <mat-icon inline>place</mat-icon> -->
+          <b>Ubicación:</b>
+          {{ selectedEvent!.event.extendedProps['location'] }}
+        </div>
+        <p *ngIf="selectedEvent!.event.extendedProps['description']" class="truncate-5 event-popover__can-wrap">
+          <b>Descripción:</b>
+          {{ selectedEvent!.event.extendedProps['description'] }}
+        </p>
+      </div>
     </div>
-
-    <mat-card-content class="event-popover__content">
-      <div *ngIf="$implicit.event.extendedProps?.location" class="truncate-2">
-        <!-- <mat-icon inline>place</mat-icon> -->
-         <b>Ubicación:</b>
-        {{ $implicit.event.extendedProps.location }}
-      </div>
-      <p *ngIf="$implicit.event.extendedProps?.description" class="truncate-5 event-popover__can-wrap">
-        <b>Descripción:</b>
-        {{ $implicit.event.extendedProps.description }}
-      </p>
-    </mat-card-content>
-  </mat-card>
-</ng-template>
+  }
+</p-overlayPanel>
+<!-- </ng-template> -->

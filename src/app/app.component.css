@@ -52,9 +52,9 @@ b { /* used for event dates/times */
   width: auto !important;
   max-width: 480px !important;
 }
-.mat-mdc-card { padding: 8px 12px; }
-.mat-mdc-card-title { margin-bottom: 4px; }
-.mat-mdc-card-subtitle { color: rgba(0,0,0,.6); }
+.p-card { padding: 8px 12px; }
+/* .mat-mdc-card-title { margin-bottom: 4px; } */
+/* .mat-mdc-card-subtitle { color: rgba(0,0,0,.6); } */
 /* .mat-mdc-card-actions { padding: 8px 12px 12px; } */
 .mat-mdc-card-content { padding-bottom: 12px; }
 

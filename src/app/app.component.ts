@@ -21,13 +21,20 @@ import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { ViewChild, TemplateRef, ViewContainerRef } from '@angular/core';
 
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
+import { CardModule } from 'primeng/card';
+import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
+
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
     CommonModule, FullCalendarModule, MatDialogModule,
     MatCardModule, MatIconModule, MatButtonModule,
-    MatTooltipModule, FormsModule
+    MatTooltipModule, FormsModule,
+    ButtonModule, TooltipModule, CardModule,
+    OverlayPanelModule,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
@@ -35,6 +42,8 @@ import { ViewChild, TemplateRef, ViewContainerRef } from '@angular/core';
 export class AppComponent {
   private dialog = inject(MatDialog);
   private isDialogOpen = signal(false);
+  @ViewChild('op') op!: OverlayPanel;
+  selectedEvent: EventClickArg | null = null;
 
   slotTime = SLOT // '10:00'
   slot = SLOTS_PER_HOUR // 6
@@ -116,9 +125,9 @@ export class AppComponent {
   currentEvents = signal<EventApi[]>([]);
   // isAddingTask = false
   @ViewChild('eventPopoverTpl') eventPopoverTpl!: TemplateRef<any>;
-  private overlayRef?: OverlayRef;
-  private overlay = inject(Overlay);
-  private vcr = inject(ViewContainerRef);
+  // private overlayRef?: OverlayRef;
+  // private overlay = inject(Overlay);
+  // private vcr = inject(ViewContainerRef);
 
   constructor(
     private changeDetector: ChangeDetectorRef,
@@ -146,6 +155,7 @@ export class AppComponent {
 
   // Поток «Создание события»
   handleDateSelect(selectInfo: DateSelectArg) {
+    this.op.hide();
     const calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
 
@@ -190,6 +200,7 @@ export class AppComponent {
   }
 
   onEditEvent(clickInfo: EventClickArg) {
+    this.op.hide();
     if (this.isDialogOpen() || this.dialog.openDialogs.length) return;
     this.isDialogOpen.set(true);
 
@@ -242,32 +253,38 @@ export class AppComponent {
       });
   }
 
+  // handleEventClick(arg: EventClickArg) {
+  //   arg.jsEvent.preventDefault();
+  //   this.closeOverlay();
+
+  //   const positionStrategy = this.overlay.position()
+  //     .flexibleConnectedTo(arg.el)
+  //     .withViewportMargin(8)
+  //     .withPositions([
+  //       { originX: 'center', originY: 'top',    overlayX: 'center', overlayY: 'bottom', offsetY: -8 },
+  //       { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top',    offsetY:  8 },
+  //       { originX: 'end',    originY: 'center', overlayX: 'start',  overlayY: 'center', offsetX:  8 },
+  //       { originX: 'start',  originY: 'center', overlayX: 'end',    overlayY: 'center', offsetX: -8 },
+  //     ]);
+
+  //   this.overlayRef = this.overlay.create({
+  //     positionStrategy,
+  //     hasBackdrop: true,
+  //     backdropClass: 'cdk-overlay-transparent-backdrop',
+  //     scrollStrategy: this.overlay.scrollStrategies.close(),
+  //   });
+  //   const portal = new TemplatePortal(this.eventPopoverTpl, this.vcr, { $implicit: arg });
+  //   this.overlayRef.attach(portal);
+  //   this.overlayRef.backdropClick().subscribe(() => this.closeOverlay());
+  // }
+
   handleEventClick(arg: EventClickArg) {
     arg.jsEvent.preventDefault();
-    this.closeOverlay();
-
-    const positionStrategy = this.overlay.position()
-      .flexibleConnectedTo(arg.el)
-      .withViewportMargin(8)
-      .withPositions([
-        { originX: 'center', originY: 'top',    overlayX: 'center', overlayY: 'bottom', offsetY: -8 },
-        { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top',    offsetY:  8 },
-        { originX: 'end',    originY: 'center', overlayX: 'start',  overlayY: 'center', offsetX:  8 },
-        { originX: 'start',  originY: 'center', overlayX: 'end',    overlayY: 'center', offsetX: -8 },
-      ]);
-
-    this.overlayRef = this.overlay.create({
-      positionStrategy,
-      hasBackdrop: true,
-      backdropClass: 'cdk-overlay-transparent-backdrop',
-      scrollStrategy: this.overlay.scrollStrategies.close(),
-    });
-    const portal = new TemplatePortal(this.eventPopoverTpl, this.vcr, { $implicit: arg });
-    this.overlayRef.attach(portal);
-    this.overlayRef.backdropClick().subscribe(() => this.closeOverlay());
+    this.selectedEvent = arg;
+    this.op.toggle(arg.jsEvent as MouseEvent, arg.el as HTMLElement); // открыть/закрыть панель в точке клика
   }
 
-  closeOverlay() { this.overlayRef?.dispose(); this.overlayRef = undefined; }
+  // closeOverlay() { this.overlayRef?.dispose(); this.overlayRef = undefined; }
 
   handleEvents(events: EventApi[]) {
     this.currentEvents.set(events);
