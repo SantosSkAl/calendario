@@ -42,31 +42,6 @@
       <textarea matInput rows="3" formControlName="description"></textarea>
     </mat-form-field>
 
-    <!-- Даты -->
-    <!-- <mat-form-field appearance="outline">
-      <mat-label>Дата начала</mat-label>
-      <input matInput [matDatepicker]="pickerStart" formControlName="dateStart">
-      <mat-datepicker-toggle matSuffix [for]="pickerStart"></mat-datepicker-toggle>
-      <mat-datepicker #pickerStart></mat-datepicker>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Дата окончания</mat-label>
-      <input matInput [matDatepicker]="pickerEnd" formControlName="dateEnd">
-      <mat-datepicker-toggle matSuffix [for]="pickerEnd"></mat-datepicker-toggle>
-      <mat-datepicker #pickerEnd></mat-datepicker>
-    </mat-form-field> -->
-
-    <!-- <mat-form-field appearance="outline" style="grid-column: span 2">
-      <mat-label>Дата</mat-label>
-      <mat-date-range-input [rangePicker]="picker" [formGroup]="form">
-        <input matStartDate formControlName="dateStart" placeholder="Начало" />
-        <input matEndDate formControlName="dateEnd" placeholder="Окончание" />
-      </mat-date-range-input>
-      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-      <mat-date-range-picker #picker></mat-date-range-picker>
-    </mat-form-field> -->
-
     <mat-form-field appearance="outline" style="grid-column: span 2">
       <mat-label>Fecha</mat-label>
       <mat-date-range-input
@@ -105,26 +80,6 @@
     @if (!form.value.allDay) {
     <div style="display: flex; gap: 12px; align-items: center">
 
-      <!-- <mat-form-field appearance="outline">
-        <mat-label>Время начала</mat-label>
-        <input
-          matInput
-          type="time"
-          formControlName="timeStart"
-          [disabled]="form.value.allDay!"
-        />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Время окончания</mat-label>
-        <input
-          matInput
-          type="time"
-          formControlName="timeEnd"
-          [disabled]="form.value.allDay!"
-        />
-      </mat-form-field> -->
-
       <!-- Время начала -->
       <mat-form-field appearance="outline">
         <mat-label>Hora de inicio</mat-label>
@@ -162,12 +117,6 @@
 
     </div>
     }
-
-    <!-- <div 
-         *ngIf="form.hasError('range')"
-         style="color:var(--mat-form-field-error-text-color,#f44336); font-size:12px; grid-column: span 2;">
-      Дата/время окончания должны быть позже начала
-    </div> -->
   </div>
 </mat-dialog-content>
 

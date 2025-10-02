@@ -4,36 +4,6 @@ import { MatDateFormats } from '@angular/material/core';
 let eventGuid = 0;
 const TODAY_STR = new Date().toISOString().replace(/T.*$/, ''); // YYYY-MM-DD of today
 
-export const INITIAL_EVENTS: EventInput[] = [
-  {
-    id: createEventId(),
-    title: 'All-day event',
-    start: TODAY_STR
-  },
-  {
-    id: createEventId(),
-    title: 'Timed event',
-    start: TODAY_STR + 'T00:00:00',
-    end: TODAY_STR + 'T03:00:00'
-  },
-  // {
-  //   id: createEventId(),
-  //   title: 'Timed event',
-  //   start: TODAY_STR + 'T12:00:00',
-  //   end: TODAY_STR + 'T15:00:00'
-  // },
-  {
-    id: createEventId(),
-    title: 'blaadlfkg dfdffbdb asdfdsfdasfadsfasdfadsfasdfadsf dfgdsfg fdgdfsgsfdg asgdfgfdsgfd asfgfdsgdfsgfdsgfdg',
-    start: TODAY_STR + 'T16:00:00',
-    end: TODAY_STR + 'T17:00:00',
-    extendedProps: {
-      location: 'sadfasd dsafdf blaadlfkg dfdffbdb asdfdsfdasfadsfasdfadsfasdfadsf dfgdsfg fdgdfsgsfdg asgdfgfdsgfd asfgfdsgdfsgfdsgfdg',
-      description: 'sadfasd dsafdf blaadlfkg dfdffbdb asdfdsfdasfadsfasdfadsfasdfadsf dfgdsfg fdgdfsgsfdg asgdfgfdsgfd asfgfdsgdfsgfdsgfdg sadfasd dsafdf blaadlfkg dfdffbdb asdfdsfdasfadsfasdfadsfasdfadsf dfgdsfg fdgdfsgsfdg asgdfgfdsgfd asfgfdsgdfsgfdsgfdg sadfasd dsafdf blaadlfkg dfdffbdb asdfdsfdasfadsfasdfadsfasdfadsf dfgdsfg fdgdfsgsfdg asgdfgfdsgfd asfgfdsgdfsgfdsgfdg sadfasd dsafdf blaadlfkg dfdffbdb asdfdsfdasfadsfasdfadsfasdfadsf dfgdsfg fdgdfsgsfdg asgdfgfdsgfd asfgfdsgdfsgfdsgfdg sadfasd dsafdf blaadlfkg dfdffbdb asdfdsfdasfadsfasdfadsfasdfadsf dfgdsfg fdgdfsgsfdg asgdfgfdsgfd asfgfdsgdfsgfdsgfdg sadfasd dsafdf blaadlfkg dfdffbdb asdfdsfdasfadsfasdfadsfasdfadsf dfgdsfg fdgdfsgsfdg asgdfgfdsgfd asfgfdsgdfsgfdsgfdg'
-    }
-  }
-];
-
 export function createEventId() {
   return String(eventGuid++);
 }
@@ -63,7 +33,7 @@ export const INITIAL_EVENTS_ES: EventInput[] = [
     id: createEventId(),
     title: 'Reunión de seguimiento — Equipo Web',
     start: `${TODAY_STR}T09:30:00`,
-    end:   `${TODAY_STR}T10:15:00`,
+    end:   `${TODAY_STR}T10:30:00`,
     extendedProps: {
       location: 'Sala 3B · Planta 2',
       description: 'Agenda: métricas de la semana, bloqueos, próximas entregas.'
@@ -104,17 +74,6 @@ export const INITIAL_EVENTS_ES: EventInput[] = [
   }
 ];
 
-// export const ES_PRETTY_FORMATS: MatDateFormats = {
-//   parse:   { dateInput: 'l' }, // не важно при вводе с пикера
-//   display: {
-//     dateInput: 'dd MMM, yyyy',       // ← "29 sept., 2025" (зависит от локали)
-//     monthYearLabel: 'MMM yyyy',
-//     dateA11yLabel: 'dd MMMM, yyyy',
-//     monthYearA11yLabel: 'MMMM yyyy',
-//     // rangeSeparator: ' — '
-//   }
-// };
-
 export const ES_PRETTY_FORMATS: MatDateFormats = {
   parse: { dateInput: { day: '2-digit', month: 'short', year: 'numeric' } as any },
   display: {
@@ -122,6 +81,11 @@ export const ES_PRETTY_FORMATS: MatDateFormats = {
     monthYearLabel:  { month: 'short', year: 'numeric' } as any,
     dateA11yLabel:   { day: '2-digit', month: 'long',  year: 'numeric' } as any,
     monthYearA11yLabel: { month: 'long', year: 'numeric' } as any,
-    // rangeSeparator: ' — ',
   },
 };
+
+// time constants
+export const SLOTS_PER_HOUR = 6;
+export const SLOT_MINUTES = Math.floor(60 / SLOTS_PER_HOUR);
+export const SLOT = `00:${String(SLOT_MINUTES).padStart(2, '0')}` as const;
+export const STEP_MIN_FORM = 10

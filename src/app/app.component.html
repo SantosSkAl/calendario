@@ -1,48 +1,32 @@
-<!-- @if (isAddingTask) {
-  <app-new-task (close)="onCloseAddTask()" />
-} -->
-
 <div class='demo-app'>
 
-  <!-- <div class='demo-app-sidebar'>
+  <div class='demo-app-sidebar'>
+
     <div class='demo-app-sidebar-section'>
-      <h2>Instructions</h2>
-      <ul>
-        <li>Select dates and you will be prompted to create a new event</li>
-        <li>Drag, drop, and resize events</li>
-        <li>Click an event to delete it</li>
-      </ul>
+      <h2>Dashboard</h2>
     </div>
+
     <div class='demo-app-sidebar-section'>
-      <label>
-        <input
-          type='checkbox'
-          [checked]='calendarVisible()'
-          (change)='handleCalendarToggle()'
-        />
-        toggle whole calendar
+      <label>segments in hour:
+        <select [ngModel]="slot"
+                (ngModelChange)="setSlot($event)">
+          <option *ngFor="let v of slotOptions" [ngValue]="v">{{ v }}</option>
+        </select>
       </label>
     </div>
+
     <div class='demo-app-sidebar-section'>
       <label>
+        toggle weekends
         <input
           type='checkbox'
           [checked]='calendarOptions().weekends'
           (change)='handleWeekendsToggle()'
         />
-        toggle weekends
       </label>
     </div>
-    <div class='demo-app-sidebar-section'>
-      <h2>All Events ({{currentEvents().length}})</h2>
-      <ul>
-        <li *ngFor='let event of currentEvents()'>
-          <b>{{event.startStr}}</b>
-          <i>{{event.title}}</i>
-        </li>
-      </ul>
-    </div>
-  </div> -->
+
+  </div> 
 
   <div class='demo-app-main'>
     <full-calendar *ngIf='calendarVisible()' [options]='calendarOptions()'>
@@ -54,26 +38,6 @@
   </div>
 
 </div>
-
-<!-- preview -->
-<!-- <ng-template #eventPopoverTpl let-$implicit>
-  <mat-card style="max-width: 360px;">
-    <mat-card-title>{{ $implicit.event.title }}</mat-card-title>
-    <mat-card-subtitle>
-      {{ $implicit.event.start | date:'dd MMM, HH:mm' }} — {{ $implicit.event.end | date:'dd MMM, HH:mm' }}
-    </mat-card-subtitle>
-    <mat-card-content>
-      <div *ngIf="$implicit.event.extendedProps?.location">
-        <mat-icon inline>place</mat-icon> {{ $implicit.event.extendedProps.location }}
-      </div>
-      <p *ngIf="$implicit.event.extendedProps?.description">{{ $implicit.event.extendedProps.description }}</p>
-    </mat-card-content>
-    <mat-card-actions align="end">
-      <button mat-stroked-button (click)="closeOverlay()">Закрыть</button>
-      <button mat-flat-button color="primary" (click)="onEditEvent($implicit); closeOverlay()">Редактировать</button>
-    </mat-card-actions>
-  </mat-card>
-</ng-template> -->
 
 <!-- preview -->
 <ng-template #eventPopoverTpl let-$implicit>
@@ -91,15 +55,6 @@
           <mat-icon>edit</mat-icon>
         </button>
 
-        <!-- <button mat-icon-button
-                aria-label="Удалить"
-                color="warn"
-                matTooltip="Удалить"
-                matTooltipPosition="above"
-                (click)="onDeleteEvent($implicit.event.id); closeOverlay(); $event.stopPropagation()">
-          <mat-icon>delete</mat-icon>
-        </button> -->
-
         <button mat-icon-button
                 aria-label="Cancelar"
                 matTooltip="Cancelar"
@@ -108,15 +63,6 @@
         </button>
       </div>
     <!-- </div> -->
-
-    <!-- <div class="event-popover__subtitle">
-      <b>Hora:</b>
-      {{ $implicit.event.start | date:'dd MMM, HH:mm' }}
-      <ng-container *ngIf="$implicit.event.end as end">
-        — {{ end | date:'dd MMM, HH:mm' }}
-      </ng-container>
-      <span *ngIf="$implicit.event.allDay"> (весь день)</span>
-    </div> -->
 
     <div class="event-popover__subtitle">
       <b>Fetcha & Hora:</b>
@@ -131,12 +77,7 @@
         @if ($implicit.event.end) {
           — {{ $implicit.event.end | date:'dd MMM, HH:mm' }}
         }
-      } 
-      <!-- {{ $implicit.event.start | date:'dd MMM, HH:mm' }}
-      <ng-container *ngIf="$implicit.event.end as end">
-        — {{ end | date:'dd MMM, HH:mm' }}
-      </ng-container>
-      <span *ngIf="$implicit.event.allDay"> (Todo el día)</span> -->
+      }
     </div>
 
     <mat-card-content class="event-popover__content">

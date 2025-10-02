@@ -1,13 +1,4 @@
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
-/* html {
-  font-family: sans-serif;
-} */
-
-/* body {
-  margin: 0;
-  background-color: #1e1d20;
-  color: #ede8f7;
-} */
 
 body {
   margin: 0;
@@ -29,14 +20,6 @@ body {
 .mat-mdc-autocomplete-panel.time-panel .mdc-list-item__primary-text {
   white-space: nowrap;
 }
-
-/* панель может скроллиться внутри, если контента слишком много */
-/* .cdk-overlay-pane:has(.event-popover){
-  max-height: calc(100vh - 16px);
-  overflow: auto;
-} */
-
-
 
 /* Универсально: позволяем контенту сжиматься */
 .fc .fc-event-main-frame,
@@ -66,7 +49,10 @@ body {
   white-space: nowrap;
 }
 
-/* (Если используешь listView) */
-/* .fc .fc-list-event-title {
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-} */
+/* Выделение часов */
+.fc .fc-timegrid-slot[data-time$=":00:00"] .fc-timegrid-slot-label-cushion {
+  font-weight: 700;
+  background-color: rgb(128, 128, 128, 0.3);
+}
+
+.fc .fc-timegrid-slot-label-cushion { font-variant-numeric: tabular-nums; }

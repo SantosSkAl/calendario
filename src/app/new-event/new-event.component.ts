@@ -20,6 +20,7 @@ import { startWith } from 'rxjs';
 import { MatDateRangePicker } from '@angular/material/datepicker';
 // опционально, чтобы не думать про отписку:
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { STEP_MIN_FORM } from '../event-utils';
 
 /** Валидатор диапазона: для all-day — dateEnd >= dateStart; для timed — end > start */
 function rangeValidator(group: AbstractControl): ValidationErrors | null {
@@ -96,24 +97,8 @@ export class NewEventComponent implements AfterViewInit {
       this.data.title ?? '',
       [Validators.required, Validators.maxLength(this.TITLE_MAX)],
     ],
-    // title: [
-    //   this.data.title ?? '', {
-    //   validators: [Validators.required, Validators.maxLength(100)],
-    //   updateOn: 'blur'
-    // }],
-    // location: [this.data.location ?? ''],
-    // location: this.fb.control('', { updateOn: 'blur' }), // тут блюром уменьшаем "шум"
     location: this.fb.control(this.data.location ?? '', { updateOn: 'blur' }),
-    // location: [
-    //   this.data.location ?? '', {
-    //     updateOn: 'blur'
-    // }],
-    // description: [this.data.description ?? ''],
-    // description: this.fb.control('', { updateOn: 'blur' }), // тут блюром уменьшаем "шум"
     description: this.fb.control(this.data.description ?? '', { updateOn: 'blur' }),
-    // start: [this.toLocalDatetime(this.data.start) ?? '', Validators.required],
-    // end: [this.toLocalDatetime(this.data.end) ?? ''],
-    // date: [this.initDate(), Validators.required],     // Date объект
     dateStart: [this.initDateStart(), Validators.required], // Date
     dateEnd:   [this.initDateEnd()], // Date
     timeStart: [this.initTimeStart()],                // 'HH:mm'
@@ -121,26 +106,18 @@ export class NewEventComponent implements AfterViewInit {
     allDay: [!!this.data.allDay],
   }, { validators: [rangeValidator] });
 
-  // интервал и полный список времен: 00:00..23:45 шагом STEP_MIN
-  readonly STEP_MIN = 20;
+  protected STEP_MIN = STEP_MIN_FORM;
   allTimes: string[] = Array.from(
     { length: (24 * 60) / this.STEP_MIN },
     (_, i) => this.minToHHMM(i * this.STEP_MIN)
   );
-  // endTimes: { value: string; label: string }[] = [];
-  // на сигналах
-  // превращаем valueChanges нужных контролов в сигналы
   dsSig = toSignal(this.form.get('dateStart')!.valueChanges.pipe(startWith(this.form.value.dateStart)));
   deSig = toSignal(this.form.get('dateEnd')!  .valueChanges.pipe(startWith(this.form.value.dateEnd)));
   tsSig = toSignal(this.form.get('timeStart')!.valueChanges.pipe(startWith(this.form.value.timeStart)));
-  // (опционально) если логика зависит от allDay:
-  // adSig = toSignal(this.form.get('allDay')!.valueChanges.pipe(startWith(this.form.value.allDay)));
-  // ВОТ ОН: вычисляемый список опций конца
   endTimes = computed(() => this.makeEndTimes(
     this.dsSig() as Date | null,
     this.deSig() as Date | null,
     this.tsSig() as string | null,
-    // adSig() as boolean | undefined
   ));
 
   ngAfterViewInit() {
@@ -167,12 +144,6 @@ export class NewEventComponent implements AfterViewInit {
 
     this.form.updateValueAndValidity();
   }
-
-
-  // private initDate(): Date {
-  //   const start = this.asDate(this.data.start) ?? new Date();
-  //   return new Date(start.getFullYear(), start.getMonth(), start.getDate());
-  // }
 
   private startDateOnly(d: Date) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
   private addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
@@ -210,11 +181,6 @@ export class NewEventComponent implements AfterViewInit {
     return (typeof v === 'string') ? new Date(v) : v;
   }
 
-  // private toHHMM(d: Date): string {
-  //   const p = (n: number) => String(n).padStart(2, '0');
-  //   return `${p(d.getHours())}:${p(d.getMinutes())}`;
-  // }
-
   private initTimeEnd(): string {
     const end = this.asDate(this.data.end);
     const start = this.asDate(this.data.start);
@@ -241,46 +207,11 @@ export class NewEventComponent implements AfterViewInit {
     )}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  // onAllDayToggle() {
-  //   const start = this.form.get('start')!.value;
-    //   if (this.isAllDay && this.autoEnd) {
-    //     // при «весь день» делаем end = start (без времени)
-  //     const day = typeof start === 'string' ? start.substring(0, 10) : '';
-  //     this.form.patchValue({
-  //       start: (typeof start === 'string') ? `${start.substring(0,10)}` : start,
-  //       end: day // совпадает по дате
-  //     }, { emitEvent: false });
-  //   }
-  // }
-
   onAllDayToggle() {
     const isAllDay = this.form.value.allDay;
     if (isAllDay) {
-      // при allDay времени нет → можно очистить/задизейблить,
-      // но для UX просто игнорируем при submit (disable уже стоит в шаблоне)
-      // Опционально: this.form.patchValue({ timeStart: '00:00', timeEnd: '00:00' });
     }
   }
-
-  // private toLocal(iso?: string) {
-  //   return iso ? iso.substring(0, 16) : '';
-  // }
-
-  // onSubmit() {
-  //   if (this.form.invalid) return;
-  //   this.dialogRef.close({ action: 'save', value: this.form.value });
-  // }
-
-  // ngOnInit() {
-  //   const ds = this.form.get('dateStart')!;
-  //   const de = this.form.get('dateEnd')!;
-  //   ds.valueChanges.subscribe(val => {
-  //     if (val && !de.value) {
-  //       de.patchValue(val, { emitEvent: false });
-  //       console.log(ds, de)
-  //     }
-  //   });
-  // }
 
   onSubmit() {
     if (this.form.invalid) return;
@@ -306,7 +237,6 @@ export class NewEventComponent implements AfterViewInit {
       start = `${this.fmtDay(dateStart)}T${ts}`;
       end   = `${this.fmtDay(dateEnd)}T${te}`;
     }
-    // console.log(start, end, v.allDay)
 
     this.dialogRef.close({
       action: 'save',
@@ -328,76 +258,6 @@ export class NewEventComponent implements AfterViewInit {
   close() {
     this.dialogRef.close();
   }
-
-  // endOptions() {
-  //   const ds: Date | null = this.form.value.dateStart ?? null;
-  //   const de: Date | null = this.form.value.dateEnd ?? null;
-  //   const ts: string | null = this.form.value.timeStart ?? null;
-
-  //   const sameDay =
-  //     !!ds && !!de &&
-  //     ds.getFullYear() === de.getFullYear() &&
-  //     ds.getMonth() === de.getMonth() &&
-  //     ds.getDate() === de.getDate();
-
-  //   // если день один и старт задан — фильтруем >= старта
-  //   if (sameDay && ts) {
-  //     const startMin = this.hhmmToMin(ts);
-  //     return this.allTimes
-  //       // .map(v => ({ v, m: this.hhmmToMin(v) }))
-  //       .filter(x => this.hhmmToMin(x) > startMin) // строго позже
-  //       // .map(x => ({
-  //       //   value: x.v,
-  //       //   label: `${x.v} (${this.humanDuration(x.m - startMin)})`
-  //       // }));
-  //   }
-
-  //   // иначе — просто весь список без длительности
-  //   return this.allTimes;
-  // }
-
-  // ngOnInit() {
-  //   const recompute = () => {
-  //     const ds = this.form.value.dateStart as Date | null;
-  //     const de = this.form.value.dateEnd   as Date | null;
-  //     const ts = this.form.value.timeStart as string | null;
-
-  //     const sameDay = !!ds && !!de &&
-  //       ds.getFullYear() === de.getFullYear() &&
-  //       ds.getMonth() === de.getMonth() &&
-  //       ds.getDate() === de.getDate();
-
-  //     if (sameDay && ts) {
-  //       const startMin = this.hhmmToMin(ts);
-  //       this.endTimes = this.allTimes
-  //         .map(v => ({ v, m: this.hhmmToMin(v) }))
-  //         .filter(x => x.m > startMin)
-  //         .map(x => ({ value: x.v, label: `${x.v} (${this.humanDuration(x.m - startMin)})` }));
-  //     } else {
-  //       this.endTimes = this.allTimes.map(v => ({ value: v, label: v }));
-  //     }
-  //     console.log(this.endTimes)
-  //   };
-
-  //   recompute();
-
-  //   // слушаем сразу всю форму
-  //   this.form.valueChanges.subscribe(recompute);
-    
-  //   // вариант на микротасках
-  //   // const schedule = (() => {
-  //   //   let scheduled = false;
-  //   //   return (fn: () => void) => {
-  //   //     if (scheduled) return;
-  //   //     scheduled = true;
-  //   //     queueMicrotask(() => { scheduled = false; fn(); });
-  //   //   };
-  //   // })();
-  //   // this.form.get('dateStart')!.valueChanges.subscribe(() => schedule(() => recompute()));
-  //   // this.form.get('dateEnd')!.valueChanges.subscribe(() => schedule(() => recompute()));
-  //   // this.form.get('timeStart')!.valueChanges.subscribe(() => schedule(() => recompute()));
-  // }
-
 
   private makeEndTimes(ds: Date|null, de: Date|null, ts: string|null/*, allDay?: boolean*/) {
     const effDe = de ?? ds // обрабатываем null в dateEnd, т.е. если конец не выбран — считаем однодневным
@@ -428,16 +288,7 @@ export class NewEventComponent implements AfterViewInit {
     const p = (n: number) => String(n).padStart(2, '0');
     return `${p(h)}:${p(m)}`;
   }
-  // private humanDuration(minutes: number): string { // ru
-  //   // 30 → "30 мин.", 60 → "1 ч.", 90 → "1,5 ч."
-  //   const h = Math.floor(minutes / 60);
-  //   const m = minutes % 60;
-  //   if (h === 0) return `${m} мин.`;
-  //   if (m === 0) return `${h} ч.`;
-  //   // показываем половинки как 1,5 ч.
-  //   const frac = m === 30 ? ',5' : ` ч. ${m} мин.`;
-  //   return m === 30 ? `${h}${frac} ч.` : `${h}${frac}`;
-  // }
+
   private humanDuration(minutes: number): string { // esp
     // 30 → "30 min", 60 → "1 h", 90 → "1,5 h"
     const h = Math.floor(minutes / 60);

@@ -1,4 +1,4 @@
-import { Component , signal, ChangeDetectorRef, inject } from '@angular/core';
+import { Component , signal, ChangeDetectorRef, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { CalendarOptions, DateSelectArg, EventClickArg, EventApi } from '@fullcalendar/core';
@@ -7,12 +7,12 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import multiMonthPlugin from '@fullcalendar/multimonth';
-import { INITIAL_EVENTS, INITIAL_EVENTS_ES, createEventId } from './event-utils';
-import { NewTaskComponent } from "./new-task/new-task.component";
+import { INITIAL_EVENTS_ES, SLOT, SLOTS_PER_HOUR, createEventId } from './event-utils';
 import { EventFormData, NewEventComponent } from './new-event/new-event.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import esLocale from '@fullcalendar/core/locales/es';
 
+import { FormsModule } from '@angular/forms';  
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -26,7 +26,8 @@ import { ViewChild, TemplateRef, ViewContainerRef } from '@angular/core';
   standalone: true,
   imports: [
     CommonModule, FullCalendarModule, MatDialogModule,
-    MatCardModule, MatIconModule, MatButtonModule, MatTooltipModule
+    MatCardModule, MatIconModule, MatButtonModule,
+    MatTooltipModule, FormsModule
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
@@ -34,6 +35,11 @@ import { ViewChild, TemplateRef, ViewContainerRef } from '@angular/core';
 export class AppComponent {
   private dialog = inject(MatDialog);
   private isDialogOpen = signal(false);
+
+  slotTime = SLOT // '10:00'
+  slot = SLOTS_PER_HOUR // 6
+  slotOptions: number[] = [2, 3, 6, 12];
+
   calendarVisible = signal(true);
   calendarOptions = signal<CalendarOptions>({
     locales: [esLocale],
@@ -45,12 +51,46 @@ export class AppComponent {
       listPlugin,
       multiMonthPlugin,
     ],
+    businessHours: [
+      { daysOfWeek: [1,2,3,4,5], startTime: '00:00', endTime: '24:00' }
+    ],
+    selectConstraint: 'businessHours',
+    eventConstraint:  'businessHours',
+    viewDidMount: (info) => {
+      const viewType = info.view.type;
+      
+      let newBusinessHours;
+      if (viewType === 'timeGridWeek' || viewType === 'timeGridDay') {
+        // Для недели и дня - с временными интервалами
+        newBusinessHours = [
+          { daysOfWeek: [1, 2, 3, 4, 5], startTime: '08:00', endTime: '12:00' },
+          { daysOfWeek: [1, 2, 3, 4, 5], startTime: '14:00', endTime: '18:00' },
+        ];
+      } else {
+        // Для месяца и года - только рабочие дни
+        newBusinessHours = {
+          daysOfWeek: [1, 2, 3, 4, 5], startTime: '00:00', endTime: '24:00'
+        };
+      }
+      
+      this.calendarOptions.update((options) => ({
+        ...options,
+        businessHours: newBusinessHours,
+      }));
+    },
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
       right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek,multiMonthYear'
     },
     initialView: 'dayGridMonth',
+    slotDuration: this.slotTime,          // кол-во строк в час
+    snapDuration: this.slotTime,          // шаг выделения/перетаскивания
+    slotLabelFormat: { hour: 'numeric', minute: '2-digit', hour12: false }, 
+    slotLabelInterval: '00:10',  // подписи каждый час (можно '00:30' и т.п.)
+    // опционально ограничить видимые часы
+    slotMinTime: '06:00:00',
+    slotMaxTime: '20:00:00',
     initialEvents: INITIAL_EVENTS_ES, // alternatively, use the `events` setting to fetch from a feed
     weekends: true,
     editable: true,
@@ -72,6 +112,7 @@ export class AppComponent {
       return { domNodes: [title] };
     }
   });
+  
   currentEvents = signal<EventApi[]>([]);
   // isAddingTask = false
   @ViewChild('eventPopoverTpl') eventPopoverTpl!: TemplateRef<any>;
@@ -81,8 +122,6 @@ export class AppComponent {
 
   constructor(
     private changeDetector: ChangeDetectorRef,
-    // private overlay: Overlay,
-    // private vcr: ViewContainerRef
   ) {}
 
   handleCalendarToggle() {
@@ -96,25 +135,14 @@ export class AppComponent {
     }));
   }
 
-
-  // оригинальное из доки
-  // handleDateSelect(selectInfo: DateSelectArg) {
-  //   const title = prompt('Please enter a new title for your event');
-  //   const calendarApi = selectInfo.view.calendar;
-
-  //   calendarApi.unselect(); // clear date selection
-
-  //   if (title) {
-  //     calendarApi.addEvent({
-  //       id: createEventId(),
-  //       title,
-  //       start: selectInfo.startStr,
-  //       end: selectInfo.endStr,
-  //       allDay: selectInfo.allDay
-  //     });
-  //   }
-  //   // this.isAddingTask = true
-  // }
+  setSlot(value: number) {
+    this.slotTime = `00:${String(Math.floor(60 / value)).padStart(2, '0')}`
+    this.calendarOptions.update((options) => ({
+      ...options,
+      slotDuration: this.slotTime,          
+      snapDuration: this.slotTime, 
+    }));
+  }
 
   // Поток «Создание события»
   handleDateSelect(selectInfo: DateSelectArg) {
@@ -161,19 +189,6 @@ export class AppComponent {
       });
   }
 
-  // onCloseAddTask() {
-  //   this.isAddingTask = false
-  // }
-
-  // оригинальное из доки
-  // handleEventClick(clickInfo: EventClickArg) {
-  //   if (confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
-  //     clickInfo.event.remove();
-  //   }
-  // }
- 
-  // Поток «Редактирование события»
-  // handleEventClick(clickInfo: EventClickArg) {
   onEditEvent(clickInfo: EventClickArg) {
     if (this.isDialogOpen() || this.dialog.openDialogs.length) return;
     this.isDialogOpen.set(true);
@@ -209,23 +224,6 @@ export class AppComponent {
         }
         if (res.action === 'save' && res.value) {
           const v = res.value;
-          // из оригинальной доки, установка дат поочереди в существующее событие можеты вызывать глитчи/дубликаты
-          // e.setProp('title', v.title);
-          // e.setStart(v.start);
-          // e.setEnd(v.end || null);
-          // e.setAllDay(!!v.allDay);
-          // e.setExtendedProp('location', v.location);
-          // e.setExtendedProp('description', v.description);
-
-          // // Метаданные отдельно:
-          // e.setProp('title', v.title);
-          // e.setExtendedProp('location', v.location);
-          // e.setExtendedProp('description', v.description);
-          // // Даты и allDay — АТОМАРНО, одним вызовом: (во избежание "дубликатов"/глитчей рендера)
-          // e.setDates(v.start, v.end ?? null, { allDay: !!v.allDay });
-
-          // обновление существующей заиси вызывает лгитч отрисовки на месячном фрейме при переходе timed -> all-day
-          // поэтому тупо пересозадаем событие, не забыв подхватить оригинальны id
           const common = {
             id: e.id,                         // сохраняем тот же id
             title: v.title,
@@ -252,13 +250,8 @@ export class AppComponent {
       .flexibleConnectedTo(arg.el)
       .withViewportMargin(8)
       .withPositions([
-        // { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top', offsetY: 8 },
-        // { originX: 'end', originY: 'center', overlayX: 'start', overlayY: 'center', offsetX: 8 },
-        // 1) Сверху (основной)
         { originX: 'center', originY: 'top',    overlayX: 'center', overlayY: 'bottom', offsetY: -8 },
-        // 2) Снизу (fallback)
         { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top',    offsetY:  8 },
-        // 3–4) Смещения по сторонам — на всякий
         { originX: 'end',    originY: 'center', overlayX: 'start',  overlayY: 'center', offsetX:  8 },
         { originX: 'start',  originY: 'center', overlayX: 'end',    overlayY: 'center', offsetX: -8 },
       ]);
@@ -269,24 +262,10 @@ export class AppComponent {
       backdropClass: 'cdk-overlay-transparent-backdrop',
       scrollStrategy: this.overlay.scrollStrategies.close(),
     });
-
-    // const data = arg.event.toPlainObject?.() ?? this.toPojo(arg.event);
-    // const data = arg
     const portal = new TemplatePortal(this.eventPopoverTpl, this.vcr, { $implicit: arg });
     this.overlayRef.attach(portal);
     this.overlayRef.backdropClick().subscribe(() => this.closeOverlay());
   }
-
-  // private toPojo(event: any) {
-  //   return {
-  //     id: event.id,
-  //     title: event.title,
-  //     start: event.start,
-  //     end: event.end,
-  //     allDay: event.allDay,
-  //     extendedProps: event.extendedProps ?? {}
-  //   };
-  // }
 
   closeOverlay() { this.overlayRef?.dispose(); this.overlayRef = undefined; }
 

@@ -101,9 +101,6 @@ b { /* used for event dates/times */
   white-space: normal;
 }
 
-/* (опционально) компактнее иконки, потребуется поправить центровку */
-/* .event-popover .mat-mdc-icon-button { --mdc-icon-button-state-layer-size: 32px; width: 32px; height: 32px; } */
-
 /* (опционально) "хвостик" у поповера. Добавь класс панели оверлея: this.overlayRef.addPanelClass('event-popover-panel') */
 .event-popover-panel::after {
   content: ""; position: absolute; left: 50%; transform: translateX(-50%);
@@ -124,28 +121,3 @@ b { /* used for event dates/times */
   height: 100%;
 }
 
-.gradient-top::before {
-  content: "";
-  position: absolute;
-  /* сверху, по ширине */
-  inset: 0 0 auto 0;
-  /* зона градиента */
-  height: 56px; 
-  /* pointer-events: none; */
-  /* z-index: 20; */
-
-  /* Светло-серый градиент сверху вниз */
-  /* мягкая часть до 80% высоты (32px) */
-  /* ускоряем спадание на последних 20% */
-  /* background: linear-gradient(
-    to bottom,
-    rgba(245, 245, 245, 0.95) 0%,
-    rgba(245, 245, 245, 0.80) 20%,
-    rgba(245, 245, 245, 0.60) 40%,
-    rgba(245, 245, 245, 0.40) 60%,
-    rgba(245, 245, 245, 0.22) 80%,
-    rgba(245, 245, 245, 0.08) 95%,
-    rgba(245, 245, 245, 0.00) 100%
-  ); */
-  /* background: rgba(213, 220, 233, 0.4); */
-}
