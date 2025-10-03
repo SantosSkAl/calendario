@@ -29,7 +29,7 @@
   </div> 
 
   <div class='demo-app-main'>
-    <full-calendar *ngIf='calendarVisible()' [options]='calendarOptions()'>
+    <full-calendar #fc *ngIf='calendarVisible()' [options]='calendarOptions()'>
       <ng-template #eventContent let-arg>
         <!-- <b>{{ arg.timeText }}</b> -->
         <i class="truncate-1">{{ arg.event.title }}</i>
@@ -40,7 +40,6 @@
 </div>
 
 <!-- preview -->
-<!-- <ng-template #eventPopoverTpl let-$implicit> -->
 <p-overlayPanel #op [showCloseIcon]="true"
                 [dismissable]="true"
                 [style]="{maxWidth:'480px'}"
@@ -98,4 +97,13 @@
     </div>
   }
 </p-overlayPanel>
-<!-- </ng-template> -->
+
+
+<app-new-event *ngIf="showDialog"
+  [(visible)]="showDialog"
+  [mode]="dialogMode"
+  [data]="dialogData ?? { mode: dialogMode }"
+  (saved)="onEventSaved($event)"
+  (deleted)="onEventDeleted($event)"
+  (closed)="onDialogClose()">
+</app-new-event>

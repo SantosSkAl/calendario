@@ -1,10 +1,10 @@
-import { Component, computed, DestroyRef, inject, AfterViewInit, ViewChild  } from '@angular/core';
+import { Component, computed, DestroyRef, inject, AfterViewInit, ViewChild, Input, Output, EventEmitter, Signal, OnInit  } from '@angular/core';
 import {
   MAT_DIALOG_DATA,
   MatDialogModule,
   MatDialogRef,
 } from '@angular/material/dialog';
-import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors, FormGroup } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -16,11 +16,18 @@ import { MatDatepickerModule }  from '@angular/material/datepicker';
 import { MatNativeDateModule, MAT_DATE_LOCALE }  from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { startWith } from 'rxjs';
+import { map, merge, startWith } from 'rxjs';
 import { MatDateRangePicker } from '@angular/material/datepicker';
 // опционально, чтобы не думать про отписку:
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { STEP_MIN_FORM } from '../event-utils';
+// primeng
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { CalendarModule } from 'primeng/calendar';
+import { InputSwitchModule } from 'primeng/inputswitch';
+import { DropdownModule } from 'primeng/dropdown';
 
 /** Валидатор диапазона: для all-day — dateEnd >= dateStart; для timed — end > start */
 function rangeValidator(group: AbstractControl): ValidationErrors | null {
@@ -73,7 +80,9 @@ export interface EventFormData {
     MatFormFieldModule, MatInputModule, MatCheckboxModule,
     MatButtonModule, MatIconModule, MatSlideToggleModule,
     MatDatepickerModule, MatNativeDateModule,
-    MatAutocompleteModule, MatTooltipModule
+    MatAutocompleteModule, MatTooltipModule,
+    DialogModule, ButtonModule, InputTextModule, CalendarModule,
+    InputSwitchModule, DropdownModule
   ],
   templateUrl: './new-event.component.html',
   styleUrl: './new-event.component.css',
@@ -81,68 +90,227 @@ export interface EventFormData {
     { provide: MAT_DATE_LOCALE, useValue: 'es-ES' }
   ],
 })
-export class NewEventComponent implements AfterViewInit {
-  @ViewChild('picker') picker!: MatDateRangePicker<Date>;
+export class NewEventComponent implements OnInit, AfterViewInit {
+  // prime staff
+  // ⬇⬇⬇ НОВОЕ: входы/выходы для работы с p-dialog
+  @Input() visible = false;
+  @Output() visibleChange = new EventEmitter<boolean>();
+
+  @Input() mode: 'create' | 'edit' = 'create';
+  @Input() data: EventFormData = { mode: 'create' };
+
+  @Output() saved   = new EventEmitter<any>();
+  @Output() deleted = new EventEmitter<string>();
+  @Output() closed  = new EventEmitter<void>();
+
+  // @ViewChild('picker') picker!: MatDateRangePicker<Date>;
   private destroyRef = inject(DestroyRef); 
-  private dialogRef = inject(MatDialogRef<NewEventComponent>);
-  readonly data = inject<EventFormData>(MAT_DIALOG_DATA);
+  // private dialogRef = inject(MatDialogRef<NewEventComponent>);
+  // readonly data = inject<EventFormData>(MAT_DIALOG_DATA);
   private fb = inject(FormBuilder);
   // вспомогательный флаг: «авто-конец равен началу» для allDay
   autoEnd = true;
   get isAllDay() { return !!this.form.value.allDay; }
   protected TITLE_MAX = 100;
 
-  form = this.fb.group({
-    title: [ // оставляем вариант без блюра для мгновенной валидации
-      this.data.title ?? '',
-      [Validators.required, Validators.maxLength(this.TITLE_MAX)],
-    ],
-    location: this.fb.control(this.data.location ?? '', { updateOn: 'blur' }),
-    description: this.fb.control(this.data.description ?? '', { updateOn: 'blur' }),
-    dateStart: [this.initDateStart(), Validators.required], // Date
-    dateEnd:   [this.initDateEnd()], // Date
-    timeStart: [this.initTimeStart()],                // 'HH:mm'
-    timeEnd:   [this.initTimeEnd()],                  // 'HH:mm'
-    allDay: [!!this.data.allDay],
-  }, { validators: [rangeValidator] });
+  // form = this.fb.group({
+  //   title: [ // оставляем вариант без блюра для мгновенной валидации
+  //     this.data.title ?? '',
+  //     [Validators.required, Validators.maxLength(this.TITLE_MAX)],
+  //   ],
+  //   location: this.fb.control(this.data.location ?? '', { updateOn: 'blur' }),
+  //   description: this.fb.control(this.data.description ?? '', { updateOn: 'blur' }),
+  //   dateStart: [this.initDateStart(), Validators.required], // Date
+  //   dateEnd:   [this.initDateEnd()], // Date
+  //   timeStart: [this.initTimeStart()],                // 'HH:mm'
+  //   timeEnd:   [this.initTimeEnd()],                  // 'HH:mm'
+  //   allDay: [!!this.data.allDay],
+  // }, { validators: [rangeValidator] });
+
+  form: FormGroup;
+
+  // form = this.fb.group({
+  //   // ⚠️ Значения инициализируются в ngOnInit, когда @Input() data уже доступен
+  //   title:       ['', [Validators.required, Validators.maxLength(this.TITLE_MAX)]],
+  //   location:    this.fb.control('', { updateOn: 'blur' }),
+  //   description: this.fb.control('', { updateOn: 'blur' }),
+  //   dateStart:   [null as Date | null, Validators.required],
+  //   dateEnd:     [null as Date | null],
+  //   timeStart:   [''  as string | null],
+  //   timeEnd:     [''  as string | null],
+  //   allDay:      [false],
+  // }, { validators: [rangeValidator] });
 
   protected STEP_MIN = STEP_MIN_FORM;
   allTimes: string[] = Array.from(
     { length: (24 * 60) / this.STEP_MIN },
     (_, i) => this.minToHHMM(i * this.STEP_MIN)
   );
-  dsSig = toSignal(this.form.get('dateStart')!.valueChanges.pipe(startWith(this.form.value.dateStart)));
-  deSig = toSignal(this.form.get('dateEnd')!  .valueChanges.pipe(startWith(this.form.value.dateEnd)));
-  tsSig = toSignal(this.form.get('timeStart')!.valueChanges.pipe(startWith(this.form.value.timeStart)));
-  endTimes = computed(() => this.makeEndTimes(
-    this.dsSig() as Date | null,
-    this.deSig() as Date | null,
-    this.tsSig() as string | null,
-  ));
 
-  ngAfterViewInit() {
-    this.picker.closedStream
-      .pipe(takeUntilDestroyed(this.destroyRef))               // можно убрать, если не используешь
-      .subscribe(() => this.normalizeRangeOnClose());
+  // сигналы для endTimes
+  dsSig!: Signal<Date | null>;
+  deSig!: Signal<Date | null>;
+  tsSig!: Signal<string | null>;
+  endTimes!: Signal<Array<{ value: string; label: string }>>;
+
+  constructor() {
+    // 1) создаём «пустую» форму (с безопасными дефолтами)
+    this.form = this.fb.group({
+      title: ['', [Validators.required, Validators.maxLength(this.TITLE_MAX)]],
+      location: this.fb.control('', { updateOn: 'blur' }),
+      description: this.fb.control('', { updateOn: 'blur' }),
+      dateStart: [null, Validators.required],
+      dateEnd:   [null],
+      timeStart: [''],
+      timeEnd:   [''],
+      allDay:    [false],
+    }, { validators: [rangeValidator] });
+
+    this.dsSig = toSignal(
+      this.form.get('dateStart')!.valueChanges.pipe(
+        startWith(this.form.value.dateStart ?? null),
+        map(v => v ?? null)
+      ),
+      { initialValue: this.form.value.dateStart ?? null }
+    );
+
+    this.deSig = toSignal(
+      this.form.get('dateEnd')!.valueChanges.pipe(
+        startWith(this.form.value.dateEnd ?? null),
+        map(v => v ?? null)
+      ),
+      { initialValue: this.form.value.dateEnd ?? null }
+    );
+
+    this.tsSig = toSignal(
+      this.form.get('timeStart')!.valueChanges.pipe(
+        startWith(this.form.value.timeStart ?? null),
+        map(v => v ?? null)
+      ),
+      { initialValue: this.form.value.timeStart ?? null }
+    );
+
+    this.endTimes = computed(() =>
+      this.makeEndTimes(
+        this.dsSig() as Date | null,
+        this.deSig() as Date | null,
+        this.tsSig() as string | null
+      )
+    );
   }
 
-  private normalizeRangeOnClose() {
+  ngOnInit() {
+    // ✅ Заполняем форму из входных данных (как раньше делал конструктор через inject(MAT_DIALOG_DATA))
+    this.form.patchValue({
+      title:       this.data.title ?? '',
+      location:    this.data.location ?? '',
+      description: this.data.description ?? '',
+      dateStart:   this.initDateStart(),
+      dateEnd:     this.initDateEnd(),
+      timeStart:   this.initTimeStart(),
+      timeEnd:     this.initTimeEnd(),
+      allDay:      !!this.data.allDay,
+    }, { emitEvent: false });
+
+    this.normalizeRange();
+    this.form.updateValueAndValidity({ emitEvent: false });
+
+    // ✅ Поддерживаем твою логику: сигналы от контролов + вычисление вариантов timeEnd
+    // this.dsSig = toSignal(this.form.get('dateStart')!.valueChanges.pipe(startWith(this.form.value.dateStart)));
+    // this.deSig = toSignal(this.form.get('dateEnd')!  .valueChanges.pipe(startWith(this.form.value.dateEnd)));
+    // this.tsSig = toSignal(this.form.get('timeStart')!.valueChanges.pipe(startWith(this.form.value.timeStart)));
+
+    // this.dsSig = toSignal(
+    //   this.form.get('dateStart')!.valueChanges.pipe(
+    //     startWith(this.form.value.dateStart ?? null),
+    //     map(v => v ?? null)
+    //   ),
+    //   { initialValue: this.form.value.dateStart ?? null }
+    // );
+
+    // this.deSig = toSignal(
+    //   this.form.get('dateEnd')!.valueChanges.pipe(
+    //     startWith(this.form.value.dateEnd ?? null),
+    //     map(v => v ?? null)
+    //   ),
+    //   { initialValue: this.form.value.dateEnd ?? null }
+    // );
+
+    // this.tsSig = toSignal(
+    //   this.form.get('timeStart')!.valueChanges.pipe(
+    //     startWith(this.form.value.timeStart ?? null),
+    //     map(v => v ?? null)
+    //   ),
+    //   { initialValue: this.form.value.timeStart ?? null }
+    // );
+
+    // this.endTimes = computed(() =>
+    //   this.makeEndTimes(
+    //     this.dsSig() as Date | null,
+    //     this.deSig() as Date | null,
+    //     this.tsSig() as string | null
+    //   )
+    // );
+
+    // ✅ Нормализация диапазона (раньше ты делал на closedStream пикера)
+    // merge(
+    //   this.form.get('dateStart')!.valueChanges,
+    //   this.form.get('dateEnd')!.valueChanges
+    // )
+    // .pipe(takeUntilDestroyed(this.destroyRef))
+    // .subscribe(() => {
+    //   this.normalizeRange();
+    // });
+  }
+
+  // dsSig = toSignal(this.form.get('dateStart')!.valueChanges.pipe(startWith(this.form.value.dateStart)));
+  // deSig = toSignal(this.form.get('dateEnd')!  .valueChanges.pipe(startWith(this.form.value.dateEnd)));
+  // tsSig = toSignal(this.form.get('timeStart')!.valueChanges.pipe(startWith(this.form.value.timeStart)));
+  // endTimes = computed(() => this.makeEndTimes(
+  //   this.dsSig() as Date | null,
+  //   this.deSig() as Date | null,
+  //   this.tsSig() as string | null,
+  // ));
+
+  ngAfterViewInit() {
+    // this.picker.closedStream
+    //   .pipe(takeUntilDestroyed(this.destroyRef))               // можно убрать, если не используешь
+    //   .subscribe(() => this.normalizeRange());
+  }
+
+  // private normalizeRangeOnClose() {
+  //   const ds: Date | null = this.form.value.dateStart ?? null;
+  //   const de: Date | null = this.form.value.dateEnd   ?? null;
+
+  //   // один клик → делаем однодневным
+  //   if (ds && !de) {
+  //     this.form.patchValue({ dateEnd: ds }, { emitEvent: true });
+  //   }
+
+  //   // на всякий случай выравниваем порядок
+  //   const start = this.form.value.dateStart as Date | null;
+  //   const end   = this.form.value.dateEnd   as Date | null;
+  //   if (start && end && end < start) {
+  //     this.form.patchValue({ dateStart: end, dateEnd: start }, { emitEvent: true });
+  //   }
+
+  //   this.form.updateValueAndValidity();
+  // }
+
+  // ---- Нормализация диапазона (заменяет normalizeRangeOnClose) ----
+  private normalizeRange() {
     const ds: Date | null = this.form.value.dateStart ?? null;
     const de: Date | null = this.form.value.dateEnd   ?? null;
 
-    // один клик → делаем однодневным
-    if (ds && !de) {
-      this.form.patchValue({ dateEnd: ds }, { emitEvent: true });
+    if (ds && !de) { // один клик → однодневное
+      this.form.patchValue({ dateEnd: ds }, { emitEvent: false });
     }
-
-    // на всякий случай выравниваем порядок
     const start = this.form.value.dateStart as Date | null;
     const end   = this.form.value.dateEnd   as Date | null;
     if (start && end && end < start) {
-      this.form.patchValue({ dateStart: end, dateEnd: start }, { emitEvent: true });
+      this.form.patchValue({ dateStart: end, dateEnd: start }, { emitEvent: false });
     }
-
-    this.form.updateValueAndValidity();
+    this.form.updateValueAndValidity({ emitEvent: false });
   }
 
   private startDateOnly(d: Date) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
@@ -213,23 +381,61 @@ export class NewEventComponent implements AfterViewInit {
     }
   }
 
+  // onSubmit() {
+  //   if (this.form.invalid) return;
+
+  //   const v = this.form.value;
+  //   const dateStart: Date = v.dateStart as Date;
+  //   const dateEnd: Date | null = (v.dateEnd as Date || null) ?? dateStart; // если пусто — один день
+
+  //   let start: string;
+  //   let end: string | null = null;
+
+  //   if (v.allDay) { // без времени
+  //     // FullCalendar ожидает эксклюзивный конец для all-day
+  //     start = this.fmtDay(dateStart);
+  //     if (!dateEnd || dateEnd.getTime() === dateStart.getTime()) { // проверить
+  //       end = null;
+  //     } else {
+  //       end = this.fmtDay(this.addDays(dateEnd, 1));
+  //     }
+  //   } else {
+  //     const ts = (v.timeStart || '12:00') as string;
+  //     const te = (v.timeEnd   || '13:00') as string;
+  //     start = `${this.fmtDay(dateStart)}T${ts}`;
+  //     end   = `${this.fmtDay(dateEnd)}T${te}`;
+  //   }
+
+  //   this.dialogRef.close({
+  //     action: 'save',
+  //     value: {
+  //       title: v.title,
+  //       location: v.location,
+  //       description: v.description,
+  //       allDay: !!v.allDay,
+  //       start,
+  //       end
+  //     }
+  //   });
+  // }
+
+  // ---- ВМЕСТО dialogRef.close(): эмитим результат наружу ----
   onSubmit() {
     if (this.form.invalid) return;
 
     const v = this.form.value;
     const dateStart: Date = v.dateStart as Date;
-    const dateEnd: Date | null = (v.dateEnd as Date || null) ?? dateStart; // если пусто — один день
+    const dateEnd: Date | null = (v.dateEnd as Date || null) ?? dateStart;
 
     let start: string;
     let end: string | null = null;
 
-    if (v.allDay) { // без времени
-      // FullCalendar ожидает эксклюзивный конец для all-day
+    if (v.allDay) {
       start = this.fmtDay(dateStart);
-      if (!dateEnd || dateEnd.getTime() === dateStart.getTime()) { // проверить
-        end = null;
+      if (!dateEnd || dateEnd.getTime() === dateStart.getTime()) {
+        end = null; // однодневное all-day без end
       } else {
-        end = this.fmtDay(this.addDays(dateEnd, 1));
+        end = this.fmtDay(this.addDays(dateEnd, 1)); // all-day: эксклюзивный end
       }
     } else {
       const ts = (v.timeStart || '12:00') as string;
@@ -238,25 +444,38 @@ export class NewEventComponent implements AfterViewInit {
       end   = `${this.fmtDay(dateEnd)}T${te}`;
     }
 
-    this.dialogRef.close({
-      action: 'save',
-      value: {
-        title: v.title,
-        location: v.location,
-        description: v.description,
-        allDay: !!v.allDay,
-        start,
-        end
-      }
+    // 🔁 отдаём наружу всё, что раньше возвращали через afterClosed()
+    this.saved.emit({
+      id: this.data.id, // важно для edit
+      title: v.title,
+      location: v.location,
+      description: v.description,
+      allDay: !!v.allDay,
+      start,
+      end
     });
+
+    this.close(); // закрыть диалог
   }
+
+  // remove() {
+  //   this.dialogRef.close({ action: 'delete' });
+  // }
 
   remove() {
-    this.dialogRef.close({ action: 'delete' });
+    // для delete достаточно id
+    this.deleted.emit(this.data?.id);
+    this.close();
   }
 
+  // close() {
+  //   this.dialogRef.close();
+  // }
+
   close() {
-    this.dialogRef.close();
+    this.visible = false;
+    this.visibleChange.emit(false);
+    this.closed.emit();
   }
 
   private makeEndTimes(ds: Date|null, de: Date|null, ts: string|null/*, allDay?: boolean*/) {

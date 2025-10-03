@@ -1,7 +1,7 @@
 import { Component , signal, ChangeDetectorRef, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FullCalendarModule } from '@fullcalendar/angular';
-import { CalendarOptions, DateSelectArg, EventClickArg, EventApi } from '@fullcalendar/core';
+import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
+import { CalendarOptions, DateSelectArg, EventClickArg, EventApi, Calendar } from '@fullcalendar/core';
 import interactionPlugin from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -34,16 +34,24 @@ import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
     MatCardModule, MatIconModule, MatButtonModule,
     MatTooltipModule, FormsModule,
     ButtonModule, TooltipModule, CardModule,
-    OverlayPanelModule,
+    OverlayPanelModule, NewEventComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  private dialog = inject(MatDialog);
-  private isDialogOpen = signal(false);
+  // private dialog = inject(MatDialog);
+  // private isDialogOpen = signal(false);
+
+  //p
+  @ViewChild('fc') fc!: FullCalendarComponent;   // по шаблонной ссылке
+  private calendarApi?: Calendar;
   @ViewChild('op') op!: OverlayPanel;
   selectedEvent: EventClickArg | null = null;
+  showDialog = false;  // состояние окна
+  dialogMode: 'create' | 'edit' = 'create';
+  dialogData: any = null;
+  private opening = false;
 
   slotTime = SLOT // '10:00'
   slot = SLOTS_PER_HOUR // 6
@@ -133,6 +141,16 @@ export class AppComponent {
     private changeDetector: ChangeDetectorRef,
   ) {}
 
+  ngAfterViewInit() {
+    // будет доступен после инициализации вью
+    this.calendarApi = this.fc.getApi();
+  }
+
+  // вспомогательно, чтобы безопасно брать API
+  private getApi(): Calendar | undefined {
+    return this.calendarApi ?? this.fc?.getApi();
+  }
+
   handleCalendarToggle() {
     this.calendarVisible.update((bool) => !bool);
   }
@@ -153,105 +171,212 @@ export class AppComponent {
     }));
   }
 
-  // Поток «Создание события»
+  
+
+  handleEventClick(arg: EventClickArg) {
+    arg.jsEvent.preventDefault();
+    this.selectedEvent = arg;
+    console.log('eventClick')
+    this.op.toggle(arg.jsEvent as MouseEvent, arg.el as HTMLElement); // открыть/закрыть панель в точке клика
+  }
+
   handleDateSelect(selectInfo: DateSelectArg) {
-    this.op.hide();
-    const calendarApi = selectInfo.view.calendar;
-    calendarApi.unselect();
-
-    // защита от повторных открытий диалога
-    if (this.isDialogOpen() || this.dialog.openDialogs.length) return;
-    this.isDialogOpen.set(true);
-
-    // Передаём в форму исходный диапазон из select()
-    const data: EventFormData = {
-      mode: 'create',
-      start: selectInfo.start,
-      end: selectInfo.end,
-      allDay: selectInfo.allDay
-    };
-
-    this.dialog.open(NewEventComponent, {
-      data,
-      width: '560px',
-      maxWidth: '95vw',
-      autoFocus: true,
-      restoreFocus: true
-    })
-      .afterClosed()
-      .subscribe((res?: { action: 'save'; value: any }) => {
-        this.isDialogOpen.set(false);
-        if (!res || res.action !== 'save') return;
-
-        const v = res.value; // нормализованные поля из формы
-        calendarApi.addEvent({ // Добавляем событие в календарь
-          id: createEventId(),
-          title: v.title,
-          start: v.start, // 'YYYY-MM-DD' или 'YYYY-MM-DDTHH:mm'
-          end: v.end || undefined, // null/undefined = без конца
-          allDay: v.allDay,
-          // любые ваши поля — в extendedProps
-          extendedProps: {
-            location: v.location,
-            description: v.description
-          }
-        });
-      });
+    this.getApi()?.unselect();
+    const { start, end, allDay } = selectInfo;
+    console.log('dateClick')
+    // this.dialogMode = 'create';
+    // this.dialogData = { mode: 'create', start, end, allDay };
+    // this.showDialog = true;
+    this.openDialog('create', { mode: 'create', start, end, allDay });
   }
 
   onEditEvent(clickInfo: EventClickArg) {
     this.op.hide();
-    if (this.isDialogOpen() || this.dialog.openDialogs.length) return;
-    this.isDialogOpen.set(true);
-
-    const calendarApi = clickInfo.view.calendar;
+    console.log('editClick')
+    this.selectedEvent = null; // закроем превью
+    // this.dialogMode = 'edit';
     const e = clickInfo.event;
-    // Предзаполняем форму данными выбранного события
-    const data: EventFormData = {
+    // this.dialogData = {
+    //   mode: 'edit',
+    //   id: e.id,
+    //   title: e.title,
+    //   start: e.start,
+    //   end: e.end,
+    //   allDay: e.allDay,
+    //   location: e.extendedProps['location'] || '',
+    //   description: e.extendedProps['description'] || ''
+    // };
+    // this.showDialog = true;  // откроется форма с заполненными данными
+    this.openDialog('edit', {
       mode: 'edit',
       id: e.id,
       title: e.title,
-      start: e.start ?? undefined,
-      end: e.end ?? undefined,
+      start: e.start,
+      end: e.end,
       allDay: e.allDay,
-      location: e.extendedProps['location'] ?? '',
-      description: e.extendedProps['description'] ?? ''
-    };
-
-    this.dialog.open(NewEventComponent, {
-      data,
-      width: '560px',
-      maxWidth: '95vw',
-      autoFocus: true,
-      restoreFocus: true
-    })
-      .afterClosed()
-      .subscribe((res?: { action: 'save' | 'delete'; value?: any }) => {
-        this.isDialogOpen.set(false);
-        if (!res) return;
-        if (res.action === 'delete') {
-          e.remove();
-          return;
-        }
-        if (res.action === 'save' && res.value) {
-          const v = res.value;
-          const common = {
-            id: e.id,                         // сохраняем тот же id
-            title: v.title,
-            start: v.start,                   // 'YYYY-MM-DD' или 'YYYY-MM-DDTHH:mm'
-            end: v.end ?? null,
-            allDay: !!v.allDay,
-            extendedProps: {
-              location: v.location,
-              description: v.description
-            }
-          };
-
-          e.remove();                    // полностью убираем старые сегменты
-          calendarApi.addEvent(common);  // рисуем заново с нужным типом
-        }
-      });
+      location: e.extendedProps['location'] || '',
+      description: e.extendedProps['description'] || ''
+    });
   }
+
+  onEventSaved(v: any) {
+    const calendarApi = this.getApi();
+    if (this.dialogMode === 'create') {
+      calendarApi!.addEvent({
+        id: createEventId(),
+        title: v.title,
+        start: v.start,
+        end:   v.end ?? undefined,
+        allDay: v.allDay,
+        extendedProps: { location: v.location, description: v.description }
+      });
+    } else {
+      const e = calendarApi!.getEventById(v.id);
+      e?.remove();
+      calendarApi!.addEvent({
+        id: v.id,
+        title: v.title,
+        start: v.start,
+        end:   v.end ?? undefined,
+        allDay: v.allDay,
+        extendedProps: { location: v.location, description: v.description }
+      });
+    }
+    this.showDialog = false;
+  }
+
+  onEventDeleted(id?: string) {
+    if (!id) return;
+    const calendarApi = this.getApi();
+    calendarApi!.getEventById(id)?.remove();
+    this.showDialog = false;
+  }
+
+  onDialogClose() { this.showDialog = false; }
+
+  // closeOverlay() { this.overlayRef?.dispose(); this.overlayRef = undefined; }
+
+  handleEvents(events: EventApi[]) {
+    this.currentEvents.set(events);
+    this.changeDetector.detectChanges(); // workaround for pressionChangedAfterItHasBeenCheckedError
+  }
+
+  private openDialog(mode: 'create' | 'edit', data: any) {
+    // не открываем второй раз поверх текущего открытия/диалога
+    if (this.opening || this.showDialog) return;
+
+    this.opening = true;
+    this.dialogMode = mode;
+    this.dialogData = data;
+
+    // Чуть отложим, чтобы:
+    // - FullCalendar успел сделать unselect/отрисоваться
+    // - OverlayPanel успел закрыться
+    queueMicrotask(() => {
+      this.showDialog = true;
+      this.opening = false;
+    });
+  }
+
+  // Поток «Создание события»
+  // handleDateSelect(selectInfo: DateSelectArg) {
+  //   this.op.hide();
+  //   const calendarApi = selectInfo.view.calendar;
+  //   calendarApi.unselect();
+
+  //   // защита от повторных открытий диалога
+  //   if (this.isDialogOpen() || this.dialog.openDialogs.length) return;
+  //   this.isDialogOpen.set(true);
+
+  //   // Передаём в форму исходный диапазон из select()
+  //   const data: EventFormData = {
+  //     mode: 'create',
+  //     start: selectInfo.start,
+  //     end: selectInfo.end,
+  //     allDay: selectInfo.allDay
+  //   };
+
+  //   this.dialog.open(NewEventComponent, {
+  //     data,
+  //     width: '560px',
+  //     maxWidth: '95vw',
+  //     autoFocus: true,
+  //     restoreFocus: true
+  //   })
+  //     .afterClosed()
+  //     .subscribe((res?: { action: 'save'; value: any }) => {
+  //       this.isDialogOpen.set(false);
+  //       if (!res || res.action !== 'save') return;
+
+  //       const v = res.value; // нормализованные поля из формы
+  //       calendarApi.addEvent({ // Добавляем событие в календарь
+  //         id: createEventId(),
+  //         title: v.title,
+  //         start: v.start, // 'YYYY-MM-DD' или 'YYYY-MM-DDTHH:mm'
+  //         end: v.end || undefined, // null/undefined = без конца
+  //         allDay: v.allDay,
+  //         // любые ваши поля — в extendedProps
+  //         extendedProps: {
+  //           location: v.location,
+  //           description: v.description
+  //         }
+  //       });
+  //     });
+  // }
+
+  // onEditEvent(clickInfo: EventClickArg) {
+  //   this.op.hide();
+  //   if (this.isDialogOpen() || this.dialog.openDialogs.length) return;
+  //   this.isDialogOpen.set(true);
+
+  //   const calendarApi = clickInfo.view.calendar;
+  //   const e = clickInfo.event;
+  //   // Предзаполняем форму данными выбранного события
+  //   const data: EventFormData = {
+  //     mode: 'edit',
+  //     id: e.id,
+  //     title: e.title,
+  //     start: e.start ?? undefined,
+  //     end: e.end ?? undefined,
+  //     allDay: e.allDay,
+  //     location: e.extendedProps['location'] ?? '',
+  //     description: e.extendedProps['description'] ?? ''
+  //   };
+
+  //   this.dialog.open(NewEventComponent, {
+  //     data,
+  //     width: '560px',
+  //     maxWidth: '95vw',
+  //     autoFocus: true,
+  //     restoreFocus: true
+  //   })
+  //     .afterClosed()
+  //     .subscribe((res?: { action: 'save' | 'delete'; value?: any }) => {
+  //       this.isDialogOpen.set(false);
+  //       if (!res) return;
+  //       if (res.action === 'delete') {
+  //         e.remove();
+  //         return;
+  //       }
+  //       if (res.action === 'save' && res.value) {
+  //         const v = res.value;
+  //         const common = {
+  //           id: e.id,                         // сохраняем тот же id
+  //           title: v.title,
+  //           start: v.start,                   // 'YYYY-MM-DD' или 'YYYY-MM-DDTHH:mm'
+  //           end: v.end ?? null,
+  //           allDay: !!v.allDay,
+  //           extendedProps: {
+  //             location: v.location,
+  //             description: v.description
+  //           }
+  //         };
+
+  //         e.remove();                    // полностью убираем старые сегменты
+  //         calendarApi.addEvent(common);  // рисуем заново с нужным типом
+  //       }
+  //     });
+  // }
 
   // handleEventClick(arg: EventClickArg) {
   //   arg.jsEvent.preventDefault();
@@ -277,17 +402,4 @@ export class AppComponent {
   //   this.overlayRef.attach(portal);
   //   this.overlayRef.backdropClick().subscribe(() => this.closeOverlay());
   // }
-
-  handleEventClick(arg: EventClickArg) {
-    arg.jsEvent.preventDefault();
-    this.selectedEvent = arg;
-    this.op.toggle(arg.jsEvent as MouseEvent, arg.el as HTMLElement); // открыть/закрыть панель в точке клика
-  }
-
-  // closeOverlay() { this.overlayRef?.dispose(); this.overlayRef = undefined; }
-
-  handleEvents(events: EventApi[]) {
-    this.currentEvents.set(events);
-    this.changeDetector.detectChanges(); // workaround for pressionChangedAfterItHasBeenCheckedError
-  }
 }
