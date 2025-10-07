@@ -80,3 +80,8 @@ body {
   /* padding: .35rem .45rem;            меньше дефолта */
 /* } */
 /* .event-popover__icon-btn .p-button-label { display: none; } только иконка */
+
+/* :root .p-datepicker-touch-ui, .p-calendar .p-datepicker-touch-ui {
+  min-width: 400px;
+  max-width: 420px;
+} */

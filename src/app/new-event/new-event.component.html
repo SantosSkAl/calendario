@@ -62,9 +62,24 @@
               [readonlyInput]="true"
               [showIcon]="true"
               [touchUI]="true"
+              [panelStyle]="{ minWidth: '300px', maxWidth: '420px', width: 'auto'  }"
               [showButtonBar]="true"
               dateFormat="dd/mm/yy">
             </p-calendar>
+            <!-- <p-calendar
+              id="dateStart"
+              formControlName="dateStart"
+              [readonlyInput]="true"
+              [showIcon]="true"
+              panelStyleClass="event-datepanel"
+              [touchUI]="false"
+              [monthNavigator]="true"          
+              [yearNavigator]="true"
+              [yearRange]="'2000:2035'"
+              [numberOfMonths]="1" 
+              [showButtonBar]="true"
+              dateFormat="dd/mm/yy">
+            </p-calendar> -->
           </div>
 
           <div class="field col-12 sm:col-6">
@@ -75,6 +90,7 @@
               [readonlyInput]="true"
               [showIcon]="true"
               [touchUI]="true"
+              [panelStyle]="{ minWidth: '300px', maxWidth: '420px', width: 'auto'  }"
               [showButtonBar]="true"
               dateFormat="dd/mm/yy">
             </p-calendar>

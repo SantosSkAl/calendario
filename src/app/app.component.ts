@@ -1,5 +1,6 @@
 import { Component , signal, ChangeDetectorRef, ViewChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
 import { CalendarOptions, DateSelectArg, EventClickArg, EventApi, Calendar } from '@fullcalendar/core';
@@ -15,14 +16,15 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CardModule } from 'primeng/card';
 import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
 
-import { INITIAL_EVENTS_ES, SLOT, SLOTS_PER_HOUR, createEventId } from './event-utils';
+import { ES, INITIAL_EVENTS_ES, SLOT, SLOTS_PER_HOUR, createEventId } from './event-utils';
 import { NewEventComponent } from './new-event/new-event.component';
+import { PrimeNGConfig } from 'primeng/api';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
-    CommonModule, FullCalendarModule,
+    CommonModule, FullCalendarModule, FormsModule,
     ButtonModule, TooltipModule, CardModule,
     OverlayPanelModule, NewEventComponent
   ],
@@ -122,7 +124,12 @@ export class AppComponent {
 
   constructor(
     private changeDetector: ChangeDetectorRef,
+    private primeng: PrimeNGConfig
   ) {}
+
+  ngOnInit() {
+    this.primeng.setTranslation(ES);
+  }
 
   ngAfterViewInit() {
     // будет доступен после инициализации вью
@@ -225,6 +232,13 @@ export class AppComponent {
   }
 
   onDialogClose() { this.showDialog = false; }
+
+  isTimedSingleDay(ev: EventApi): boolean {
+    if (ev.allDay) return false;
+    const start = ev.start!;
+    const end = ev.end ?? start;          // если конца нет, считаем однодневным
+    return start.toDateString() === end.toDateString();
+  }
 
   handleEvents(events: EventApi[]) {
     this.currentEvents.set(events);

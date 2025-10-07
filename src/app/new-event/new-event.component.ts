@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { map, startWith } from 'rxjs';
 // опционально, чтобы не думать про отписку:
 import { toSignal } from '@angular/core/rxjs-interop';
-import { STEP_MIN_FORM } from '../event-utils';
+import { ES, STEP_MIN_FORM } from '../event-utils';
 // primeng
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -13,6 +13,7 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
 import { CalendarModule } from 'primeng/calendar';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { DropdownModule } from 'primeng/dropdown';
+// import type { LocaleSettings } from 'primeng/calendar';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 
 /** Валидатор диапазона: для all-day — dateEnd >= dateStart; для timed — end > start */
@@ -90,6 +91,7 @@ export class NewEventComponent implements OnInit, AfterViewInit {
   autoEnd = true;
   get isAllDay() { return !!this.form.value.allDay; }
   protected TITLE_MAX = 100;
+  // es: LocaleSettings = ES
 
   form: FormGroup;
 
