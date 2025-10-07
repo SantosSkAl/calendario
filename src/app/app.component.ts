@@ -157,24 +157,21 @@ export class AppComponent {
   handleEventClick(arg: EventClickArg) {
     arg.jsEvent.preventDefault();
     this.selectedEvent = arg;
-    console.log('eventClick')
     this.op.toggle(arg.jsEvent as MouseEvent, arg.el as HTMLElement); // открыть/закрыть панель в точке клика
   }
 
   handleDateSelect(selectInfo: DateSelectArg) {
-    console.log(this.showDialog)
     this.getApi()?.unselect();
     const { start, end, allDay } = selectInfo;
-    console.log('dateClick')
     this.dialogMode = 'create';
     this.dialogData = { mode: 'create', start, end, allDay };
+    // queueMicrotask(() => this.showDialog = true);
     this.showDialog = true;
-    console.log(this.showDialog)
   }
 
   onEditEvent(clickInfo: EventClickArg) {
     this.op.hide();
-    console.log('editClick')
+
     this.selectedEvent = null; // закроем превью
     this.dialogMode = 'edit';
     const e = clickInfo.event;

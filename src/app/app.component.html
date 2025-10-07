@@ -40,30 +40,40 @@
 </div>
 
 <!-- preview -->
-<p-overlayPanel #op [showCloseIcon]="true"
+<p-overlayPanel #op [showCloseIcon]="false"
                 [dismissable]="true"
                 [style]="{maxWidth:'480px'}"
                 [appendTo]="'body'"
                 (onHide)="selectedEvent = null">
   @if (selectedEvent?.event) {
-    <div class="event-popover p-card p-component">
+    <!-- <div class="event-popover p-card p-component"> -->
     
       <div class="event-popover__header">
         <div class="event-popover__title truncate-1">{{ selectedEvent?.event?.title }}</div>
         <span class="spacer"></span>
 
         <!-- p-button + иконки primeicons -->
-        <button pButton type="button"
-                pTooltip="Editar"
-                icon="pi pi-pencil"
-                (click)="onEditEvent(selectedEvent!)">
-        </button>
+        <p-button
+          icon="pi pi-pencil"
+          pTooltip="Editar"
+          [rounded]="true"
+          [text]="true"
+          [plain]="true"
+          [size]="'small'"
+          styleClass="icon-btn"
+          (onClick)="onEditEvent(selectedEvent!)">
+        </p-button>
 
-        <button pButton type="button"
-                pTooltip="Cancelar"
-                icon="pi pi-times"
-                (click)="op.hide()">
-        </button>
+        <p-button
+          icon="pi pi-times"
+          pTooltip="Cerrar"
+          [rounded]="true"
+          [text]="true"
+          [plain]="true"
+          [size]="'small'"
+          styleClass="icon-btn"
+          (onClick)="op.hide()">
+        </p-button>
       </div>
 
 
@@ -93,7 +103,7 @@
           {{ selectedEvent!.event.extendedProps['description'] }}
         </p>
       </div>
-    </div>
+    <!-- </div> -->
   }
 </p-overlayPanel>
 

@@ -164,7 +164,7 @@ export class NewEventComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit() {
-    console.log('NewEventComponent init - mode:', this.mode, 'data:', this.data);
+    // console.log('NewEventComponent init - mode:', this.mode, 'data:', this.data);
     // ✅ Заполняем форму из входных данных (как раньше делал конструктор через inject(MAT_DIALOG_DATA))
     this.form.patchValue({
       title:       this.data.title ?? '',

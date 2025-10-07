@@ -75,7 +75,7 @@ b { /* used for event dates/times */
 }
 
 .event-popover__header {
-  display: flex; align-items: center; margin-bottom: 4px;
+  display: flex; align-items: center; margin-bottom: 16px;
 }
 .event-popover__title { font-size: 18px; font-weight: 600; flex:1 1 auto; min-width:0; margin-right: 40px; }
 .event-popover__subtitle { color: rgba(0,0,0,.6); margin-bottom: 16px; }
@@ -121,3 +121,7 @@ b { /* used for event dates/times */
   height: 100%;
 }
 
+.event-popover__icon-btn {
+  flex: 0 0 auto;
+  /* padding: .35rem .45rem;            меньше дефолта */
+}

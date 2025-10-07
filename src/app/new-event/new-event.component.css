@@ -1,5 +1,12 @@
-.edit__title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.fix-h {
+  block-size: 80px;
 }
+
+/* одинаковые отступы */
+.event-dialog .p-dialog-header,
+.event-dialog .p-dialog-content,
+.event-dialog .p-dialog-footer {
+  padding: 16px 24px;     /* 1rem = 16px, 1.5rem = 24px */
+}
+
+

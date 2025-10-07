@@ -1,4 +1,4 @@
-@import '@angular/material/prebuilt-themes/indigo-pink.css';
+/* @import '@angular/material/prebuilt-themes/indigo-pink.css'; */
 
 @import 'primeng/resources/themes/lara-light-blue/theme.css';
 @import 'primeng/resources/primeng.min.css';
@@ -61,3 +61,22 @@ body {
 }
 
 .fc .fc-timegrid-slot-label-cushion { font-variant-numeric: tabular-nums; }
+
+
+ /* по умолчанию в теме у всех кнопок правый отступ, меняем это */
+:root .event-dialog .p-dialog-footer {
+  display: flex;                 /* чтобы заработал gap */
+  justify-content: flex-end;
+  gap: .5rem;                    /* расстояние между кнопками */
+}
+
+:root .event-dialog .p-dialog-footer button.p-button {
+  margin: 0 !important;          /* убираем дефолтный правый margin темы */
+}
+
+/* не даём кнопкам сжиматься и делаем их компактными */
+/* .event-popover__icon-btn {
+  flex: 0 0 auto; */
+  /* padding: .35rem .45rem;            меньше дефолта */
+/* } */
+/* .event-popover__icon-btn .p-button-label { display: none; } только иконка */
