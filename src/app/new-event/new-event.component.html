@@ -1,26 +1,18 @@
-<p-dialog [(visible)]="visible"
-          [modal]="true"
-          [style]="{width:'640px'}"
-          [dismissableMask]="true"
-          [closeOnEscape]="true"
-          [draggable]="false"
-          header="{{ data.mode === 'create' ? 'Nuevo evento' : 'Editar evento' }}">
-
-  <!-- <div class="edit__title">
-    <h2 mat-dialog-title>
-      {{ data.mode === "create" ? "Nuevo evento" : "Editar evento" }}
-    </h2>
-    <button mat-icon-button
-            aria-label="Cancelar"
-            matTooltip="Cancelar"
-            matTooltipPosition="left"
-            (click)="close()"
-            style="margin-right: 10px; margin-top: 5px;">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div> -->
-
-  <mat-dialog-content [formGroup]="form" style="padding: 8px 24px">
+<p-dialog
+  [(visible)]="visible"
+  (visibleChange)="onInternalVisibleChange($event)"
+  (onHide)="onInternalHide()"
+  [modal]="true"
+  [style]="{ width: '640px' }"
+  [dismissableMask]="true"
+  [closeOnEscape]="true"
+  [draggable]="false"
+  [appendTo]="'body'"
+  [autoZIndex]="true"
+  [baseZIndex]="1100"
+  header="{{ data.mode === 'create' ? 'Nuevo evento' : 'Editar evento' }}"
+>
+  <form [formGroup]="form" style="padding: 8px 24px">
     <div
       style="
         display: grid;
@@ -29,131 +21,136 @@
         align-items: start;
       "
     >
-      <mat-form-field appearance="outline">
-        <mat-label>Título</mat-label>
-        <input matInput formControlName="title" cdkFocusInitial />
-        <mat-error *ngIf="form.controls['title'].hasError('required')">
-          Campo obligatorio
-        </mat-error>
-        <mat-error *ngIf="form.controls['title'].hasError('maxlength')">
-          Máximo {{ TITLE_MAX }} caracteres
-        </mat-error>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Ubicación</mat-label>
-        <input matInput formControlName="location" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" style="grid-column: span 2">
-        <mat-label>Descripción</mat-label>
-        <textarea matInput rows="3" formControlName="description"></textarea>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" style="grid-column: span 2">
-        <mat-label>Fecha</mat-label>
-        <mat-date-range-input
-          [rangePicker]="picker"
-          [formGroup]="form"
-          (click)="picker.open()"
-          (focusin)="picker.open()"
+      <div class="p-field">
+        <label for="title">Título*</label>
+        <input id="title" pInputText class="w-full" formControlName="title" />
+        <small
+          class="p-error"
+          *ngIf="form.controls['title'].hasError('required')"
+          >Campo obligatorio</small
         >
-          <input matStartDate formControlName="dateStart" placeholder="Inicio" readonly/>
-          <input matEndDate formControlName="dateEnd" placeholder="Fin" readonly/>
-        </mat-date-range-input>
-        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-date-range-picker #picker></mat-date-range-picker>
-      </mat-form-field>
+        <small
+          class="p-error"
+          *ngIf="form.controls['title'].hasError('maxlength')"
+          >Máximo {{ TITLE_MAX }} caracteres</small
+        >
+      </div>
 
-      <div style="height: 78px">
-        <mat-slide-toggle
-          formControlName="allDay"
-          (change)="onAllDayToggle()"
-          style="white-space: nowrap"
-        >
-          Todo el día
-        </mat-slide-toggle>
-        <div
-          *ngIf="form.hasError('range')"
-          style="
-            color: var(--mat-form-field-error-text-color, #f44336);
-            font-size: 12px;
-          "
-        >
-          La fecha/hora de finalización debe ser posterior al inicio
+      <div class="p-field">
+        <label for="location">Ubicación</label>
+        <input
+          id="location"
+          pInputText
+          class="w-full"
+          formControlName="location"
+        />
+      </div>
+
+      <div class="p-field" style="grid-column: span 2">
+        <label for="description">Descripción</label>
+        <textarea
+          id="description"
+          pInputTextarea
+          rows="3"
+          class="w-full"
+          formControlName="description"
+        ></textarea>
+      </div>
+
+      <div class="p-formgrid p-grid" style="grid-column: span 2">
+        <div class="p-field p-col-12 p-md-6">
+          <label for="dateStart">Fecha inicio*</label>
+          <p-calendar
+            id="dateStart"
+            formControlName="dateStart"
+            [readonlyInput]="true"
+            [showIcon]="true"
+            [touchUI]="true"
+            [showButtonBar]="true"
+            dateFormat="dd/mm/yy"
+          >
+          </p-calendar>
+        </div>
+
+        <div class="p-field p-col-12 p-md-6">
+          <label for="dateEnd">Fecha fin</label>
+          <p-calendar
+            id="dateEnd"
+            formControlName="dateEnd"
+            [readonlyInput]="true"
+            [showIcon]="true"
+            [touchUI]="true"
+            [showButtonBar]="true"
+            dateFormat="dd/mm/yy"
+          >
+          </p-calendar>
         </div>
       </div>
 
+      <div class="flex items-center gap-2">
+        <p-inputSwitch
+          formControlName="allDay"
+          (onChange)="onAllDayToggle()"
+        ></p-inputSwitch>
+        <label>Todo el día</label>
+      </div>
+      <small class="p-error" *ngIf="form.hasError('range')">
+        La fecha/hora de finalización debe ser posterior al inicio
+      </small>
+
       <!-- Время (отключается для allDay) -->
       @if (!form.value.allDay) {
-      <div style="display: flex; gap: 12px; align-items: center">
-
-        <!-- Время начала -->
-        <mat-form-field appearance="outline">
-          <mat-label>Hora de inicio</mat-label>
-          <input
-            matInput
+      <div class="p-formgrid p-grid" *ngIf="!form.value.allDay">
+        <div class="p-field p-col-6">
+          <label for="timeStart">Hora de inicio</label>
+          <p-dropdown
+            id="timeStart"
+            [options]="allTimes"
             formControlName="timeStart"
-            [matAutocomplete]="autoStart"
-            #startTrigger="matAutocompleteTrigger"
-            (focus)="startTrigger.openPanel()"
-            (click)="startTrigger.openPanel()"
-          />
-          <mat-autocomplete #autoStart="matAutocomplete">
-            <mat-option *ngFor="let t of allTimes" [value]="t">{{ t }}</mat-option>
-          </mat-autocomplete>
-        </mat-form-field>
+            [autoDisplayFirst]="false"
+          >
+            <ng-template let-opt pTemplate="item">
+              <div>{{ opt }}</div>
+            </ng-template>
+          </p-dropdown>
+        </div>
 
-        <!-- Время окончания -->
-        <mat-form-field appearance="outline">
-          <mat-label>Hora de fin</mat-label>
-          <input
-            matInput
+        <div class="p-field p-col-6">
+          <label for="timeEnd">Hora de fin</label>
+          <p-dropdown
+            id="timeEnd"
+            [options]="endTimes()"
+            optionLabel="label"
+            optionValue="value"
             formControlName="timeEnd"
-            [matAutocomplete]="autoEnd"
-            #endTrigger="matAutocompleteTrigger"
-            (focus)="endTrigger.openPanel()"
-            (click)="endTrigger.openPanel()"
-          />
-          <mat-autocomplete #autoEnd="matAutocomplete" class="time-panel">
-            <mat-option *ngFor="let o of endTimes()" [value]="o.value" >
-              {{ o.label }}
-              <!-- {{ o.value }} -->
-            </mat-option>
-          </mat-autocomplete>
-        </mat-form-field>
-
+            [autoDisplayFirst]="false"
+          >
+            <ng-template let-opt pTemplate="item">
+              <div>{{ opt.label }}</div>
+            </ng-template>
+          </p-dropdown>
+        </div>
       </div>
       }
     </div>
-  </mat-dialog-content>
-
-  <!-- <mat-dialog-actions align="end" style="padding: 0 24px 12px 24px">
-    <button
-      mat-flat-button
-      color="primary"
-      [disabled]="form.invalid"
-      (click)="onSubmit()"
-    >
-      {{ data.mode === "create" ? "Crear" : "Guardar" }}
-    </button>
-    <button mat-flat-button color="accent" (click)="close()">Cancelar</button>
-    <button
-      *ngIf="data.mode === 'edit'"
-      mat-flat-button
-      color="warn"
-      (click)="remove()"
-    >
-      Eliminar
-    </button>
-  </mat-dialog-actions> -->
+  </form>
 
   <ng-template pTemplate="footer">
-    <p-button label="{{ data.mode === 'create' ? 'Crear' : 'Guardar' }}"
-              [disabled]="form.invalid"
-              (onClick)="onSubmit()"></p-button>
-    <p-button label="Cancelar" severity="secondary" (onClick)="close()"></p-button>
-    <p-button *ngIf="data.mode === 'edit'" label="Eliminar" severity="danger" (onClick)="remove()"></p-button>
+    <p-button
+      label="{{ data.mode === 'create' ? 'Crear' : 'Guardar' }}"
+      [disabled]="form.invalid"
+      (onClick)="onSubmit()"
+    ></p-button>
+    <p-button
+      label="Cancelar"
+      severity="secondary"
+      (onClick)="close()"
+    ></p-button>
+    <p-button
+      *ngIf="data.mode === 'edit'"
+      label="Eliminar"
+      severity="danger"
+      (onClick)="remove()"
+    ></p-button>
   </ng-template>
-
 </p-dialog>

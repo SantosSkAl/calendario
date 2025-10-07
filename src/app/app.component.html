@@ -1,6 +1,6 @@
 <div class='demo-app'>
 
-  <div class='demo-app-sidebar'>
+  <!-- <div class='demo-app-sidebar'>
 
     <div class='demo-app-sidebar-section'>
       <h2>Dashboard</h2>
@@ -26,7 +26,7 @@
       </label>
     </div>
 
-  </div> 
+  </div>  -->
 
   <div class='demo-app-main'>
     <full-calendar #fc *ngIf='calendarVisible()' [options]='calendarOptions()'>
@@ -85,7 +85,6 @@
 
       <div class="event-popover__content">
         <div *ngIf="selectedEvent!.event.extendedProps['location']" class="truncate-2">
-          <!-- <mat-icon inline>place</mat-icon> -->
           <b>Ubicación:</b>
           {{ selectedEvent!.event.extendedProps['location'] }}
         </div>
