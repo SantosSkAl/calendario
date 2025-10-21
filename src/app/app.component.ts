@@ -184,6 +184,9 @@ export class AppComponent {
     if (arg.event.display === 'background') {
       return; // игнорируем шторку, страховка, так-то в css заблокирован указатель
     }
+    if (!this.isAdmin && arg.event.extendedProps['isBlocker'] ) {
+      return;
+    }
     arg.jsEvent.preventDefault();
     this.selectedEvent = arg;
     this.op.toggle(arg.jsEvent as MouseEvent, arg.el as HTMLElement); // открыть/закрыть панель в точке клика

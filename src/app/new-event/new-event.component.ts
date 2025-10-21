@@ -223,7 +223,7 @@ export class NewEventComponent implements OnInit, AfterViewInit {
   private initTimeStart(): string {
     const start = this.asDate(this.data.start);
     // если клик был по ячейке без времени → 12:00
-    if (!start || this.data.allDay) return '12:00';
+    if (!start || this.data.allDay) return '10:00';
     return this.toHHMM(start);
   }
 
@@ -236,7 +236,7 @@ export class NewEventComponent implements OnInit, AfterViewInit {
     const end = this.asDate(this.data.end);
     const start = this.asDate(this.data.start);
     // 1) all-day: времени нет → показываем в форме умолчание (например 13:00)
-    if (this.data.allDay) return '13:00';
+    if (this.data.allDay) return '11:00';
     // 2) timed: если есть реальный конец — берём его
     if (end) return this.toHHMM(end);
     // 3) timed: конца нет, но есть старт → +1 час от старта 
@@ -245,18 +245,18 @@ export class NewEventComponent implements OnInit, AfterViewInit {
       return this.toHHMM(e);
     }
     // 4) если ничего из раннего не выполнено 13:00
-    return '13:00';
+    return '11:00';
   }
 
-  private toLocalDatetime(value?: string | Date | null) {
-    if (!value) return '';
-    const d = typeof value === 'string' ? new Date(value) : value;
-    const pad = (n: number) => String(n).padStart(2, '0');
-    // YYYY-MM-DDTHH:mm для input[type=datetime-local]
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
-      d.getDate()
-    )}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
+  // private toLocalDatetime(value?: string | Date | null) {
+  //   if (!value) return '';
+  //   const d = typeof value === 'string' ? new Date(value) : value;
+  //   const pad = (n: number) => String(n).padStart(2, '0');
+  //   // YYYY-MM-DDTHH:mm для input[type=datetime-local]
+  //   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
+  //     d.getDate()
+  //   )}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  // }
 
   onAllDayToggle() {
     const isAllDay = this.form.value.allDay;
@@ -283,8 +283,8 @@ export class NewEventComponent implements OnInit, AfterViewInit {
         end = this.fmtDay(this.addDays(dateEnd, 1)); // all-day: эксклюзивный end
       }
     } else {
-      const ts = (v.timeStart || '12:00') as string;
-      const te = (v.timeEnd   || '13:00') as string;
+      const ts = (v.timeStart || '10:00') as string;
+      const te = (v.timeEnd   || '11:00') as string;
       start = `${this.fmtDay(dateStart)}T${ts}`;
       end   = `${this.fmtDay(dateEnd)}T${te}`;
     }
