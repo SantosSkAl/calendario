@@ -85,3 +85,33 @@ body {
   min-width: 400px;
   max-width: 420px;
 } */
+
+:root .event-dialog .p-inputtext.p-invalid,
+:root .event-dialog .p-calendar .p-inputtext.p-invalid {
+  border-color: #e24c4c;
+}
+
+/* :root .event-dialog .p-inputtext.ng-invalid.ng-touched {
+  border-color: #e24c4c;
+} */
+
+
+:root .fc .event-block {
+  background-color: rgba(125, 200, 125, .15);
+  /* background-color: rgba(103,178,111,.45); */
+  border-color: rgba(80, 160, 80, .7);
+}
+
+:root .fc .block-shade {
+  background-color: rgba(125, 200, 125, .6);
+  pointer-events: none !important;
+}
+
+/* текст/время внутри */
+:root .fc .event-block .fc-event-main,
+:root .fc .event-block .fc-event-title,
+:root .fc .event-block .fc-event-time {
+  color: #2f5132;   /* не белый */
+  font-style: italic;
+  opacity: .95;
+}

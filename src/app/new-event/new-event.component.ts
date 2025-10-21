@@ -1,10 +1,10 @@
 import { Component, computed, inject, AfterViewInit, Input, Output, EventEmitter, Signal, OnInit  } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors, FormGroup } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors, FormGroup, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { map, startWith } from 'rxjs';
 // опционально, чтобы не думать про отписку:
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ES, STEP_MIN_FORM } from '../event-utils';
+import { STEP_MIN_FORM } from '../event-utils';
 // primeng
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -13,6 +13,7 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
 import { CalendarModule } from 'primeng/calendar';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { DropdownModule } from 'primeng/dropdown';
+import { FloatLabelModule } from 'primeng/floatlabel';
 // import type { LocaleSettings } from 'primeng/calendar';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 
@@ -57,13 +58,14 @@ export interface EventFormData {
   title?: string;
   location?: string;
   description?: string;
+  isBlocker?: boolean;
 }
 
 @Component({
   selector: 'app-new-event',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule,
+    CommonModule, ReactiveFormsModule, FormsModule, FloatLabelModule,
     DialogModule, ButtonModule, InputTextModule, CalendarModule,
     InputSwitchModule, DropdownModule, InputTextareaModule
   ],
@@ -95,18 +97,6 @@ export class NewEventComponent implements OnInit, AfterViewInit {
 
   form: FormGroup;
 
-  // form = this.fb.group({
-  //   // ⚠️ Значения инициализируются в ngOnInit, когда @Input() data уже доступен
-  //   title:       ['', [Validators.required, Validators.maxLength(this.TITLE_MAX)]],
-  //   location:    this.fb.control('', { updateOn: 'blur' }),
-  //   description: this.fb.control('', { updateOn: 'blur' }),
-  //   dateStart:   [null as Date | null, Validators.required],
-  //   dateEnd:     [null as Date | null],
-  //   timeStart:   [''  as string | null],
-  //   timeEnd:     [''  as string | null],
-  //   allDay:      [false],
-  // }, { validators: [rangeValidator] });
-
   protected STEP_MIN = STEP_MIN_FORM;
   allTimes: string[] = Array.from(
     { length: (24 * 60) / this.STEP_MIN },
@@ -130,6 +120,7 @@ export class NewEventComponent implements OnInit, AfterViewInit {
       timeStart: [''],
       timeEnd:   [''],
       allDay:    [false],
+      isBlocker:   [false],
     }, { validators: [rangeValidator] });
 
     this.dsSig = toSignal(
@@ -177,6 +168,7 @@ export class NewEventComponent implements OnInit, AfterViewInit {
       timeStart:   this.initTimeStart(),
       timeEnd:     this.initTimeEnd(),
       allDay:      !!this.data.allDay,
+      isBlocker:   !!this.data.isBlocker
     }, { emitEvent: false });
 
     this.normalizeRange();
@@ -295,7 +287,8 @@ export class NewEventComponent implements OnInit, AfterViewInit {
       end   = `${this.fmtDay(dateEnd)}T${te}`;
     }
 
-    // 🔁 отдаём наружу всё, что раньше возвращали через afterClosed()
+    // отдаём наружу всё, что раньше возвращали через afterClosed()
+    // console.log(v.isBlocker)
     this.saved.emit({
       id: this.data.id, // важно для edit
       title: v.title,
@@ -303,7 +296,8 @@ export class NewEventComponent implements OnInit, AfterViewInit {
       description: v.description,
       allDay: !!v.allDay,
       start,
-      end
+      end,
+      isBlocker: !!v.isBlocker
     });
 
     this.close(); // закрыть диалог
@@ -385,6 +379,10 @@ export class NewEventComponent implements OnInit, AfterViewInit {
     // показываем половинки как 1,5 ч.
     const frac = m === 30 ? ',5' : ` h ${m} min`;
     return m === 30 ? `${h}${frac} h` : `${h}${frac}`;
+  }
+
+  onDisplayToggle() {
+
   }
 
 }

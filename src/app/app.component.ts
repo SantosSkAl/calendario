@@ -62,6 +62,7 @@ export class AppComponent {
     ],
     selectConstraint: 'businessHours',
     eventConstraint:  'businessHours',
+
     viewDidMount: (info) => {
       const viewType = info.view.type;
       
@@ -84,6 +85,21 @@ export class AppComponent {
         businessHours: newBusinessHours,
       }));
     },
+
+    selectOverlap: (stillEvent) => {
+      // нельзя выделять поверх блокера
+      // return !(stillEvent.extendedProps?.['isBlocker']);
+      if (!stillEvent.extendedProps?.['isBlocker']) return true;
+      return !stillEvent.allDay; 
+    },
+    eventOverlap: (stillEvent, movingEvent) => { // как буд-то лишнее
+      // нельзя перетаскивать/ресайзить обычные события в блокер
+      if (stillEvent.extendedProps?.['isBlocker'] && !movingEvent?.extendedProps?.['isBlocker']) {
+        return false;
+      }
+      return true;
+    },
+
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
@@ -128,6 +144,7 @@ export class AppComponent {
   ) {}
 
   ngOnInit() {
+    this.primeng.ripple = true;
     this.primeng.setTranslation(ES);
   }
 
@@ -162,12 +179,17 @@ export class AppComponent {
   }
 
   handleEventClick(arg: EventClickArg) {
+    if (arg.event.display === 'background') {
+      return; // игнорируем шторку, страховка, так-то в css заблокирован указатель
+    }
     arg.jsEvent.preventDefault();
     this.selectedEvent = arg;
     this.op.toggle(arg.jsEvent as MouseEvent, arg.el as HTMLElement); // открыть/закрыть панель в точке клика
   }
 
   handleDateSelect(selectInfo: DateSelectArg) {
+    this.op.hide();
+
     this.getApi()?.unselect();
     const { start, end, allDay } = selectInfo;
     this.dialogMode = 'create';
@@ -190,7 +212,8 @@ export class AppComponent {
       end: e.end,
       allDay: e.allDay,
       location: e.extendedProps['location'] || '',
-      description: e.extendedProps['description'] || ''
+      description: e.extendedProps['description'] || '',
+      isBlocker: e.extendedProps['isBlocker'] || false,
     };
     // открыть на следующий микротакт, чтобы overlay успел скрыться до открытия формы
     // более правильно будет добавить еще один метод, гарантирующий скрытие оверлея, и после вызов формы
@@ -200,27 +223,75 @@ export class AppComponent {
 
   onEventSaved(v: any) {
     const calendarApi = this.getApi();
-    if (this.dialogMode === 'create') {
-      calendarApi!.addEvent({
-        id: createEventId(),
+
+    let event = {}
+    const baseId = this.dialogMode === 'create' ? createEventId() : v.id;
+    if (v.isBlocker) {
+      event = {
+        id: baseId ,
         title: v.title,
         start: v.start,
         end:   v.end ?? undefined,
         allDay: v.allDay,
-        extendedProps: { location: v.location, description: v.description }
-      });
+        extendedProps: { location: v.location, description: v.description, isBlocker: v.isBlocker },
+        editable: false,              // сам блок не двигаем
+        overlap: false,               // подсказка движку
+        classNames: ['event-block'],
+      }
     } else {
-      const e = calendarApi!.getEventById(v.id);
-      e?.remove();
-      calendarApi!.addEvent({
-        id: v.id,
+      event = {
+        id: baseId ,
         title: v.title,
         start: v.start,
         end:   v.end ?? undefined,
         allDay: v.allDay,
-        extendedProps: { location: v.location, description: v.description }
-      });
+        extendedProps: { location: v.location, description: v.description, isBlocker: v.isBlocker },
+      }
     }
+
+    // если редактирование — удаляем старые экземпляры (и возможную шторку)
+    if (this.dialogMode === 'edit') {
+      calendarApi!.getEventById(baseId)?.remove();
+      calendarApi!.getEventById(`${baseId}__shade`)?.remove();
+    }
+    // добавляем основное событие
+    calendarApi!.addEvent(event);
+
+    if (v.isBlocker && v.allDay) {
+      const shadeId = `${baseId}__shade`
+      calendarApi!.addEvent({
+        ...event,
+        title: '',
+        id: shadeId,
+        display: 'background',
+        classNames: ['block-shade'],
+        // backgroundColor: 'rgba(103,178,111,.45)',
+      })
+    }
+
+    // if (this.dialogMode === 'create') {
+    //   calendarApi!.addEvent({
+    //     id: createEventId(),
+    //     title: v.title,
+    //     start: v.start,
+    //     end:   v.end ?? undefined,
+    //     allDay: v.allDay,
+    //     extendedProps: { location: v.location, description: v.description, isBlocker: v.isBlocker },
+    //     // display: v.display,
+    //   });
+    // } else {
+    //   const e = calendarApi!.getEventById(v.id);
+    //   e?.remove();
+    //   calendarApi!.addEvent({
+    //     id: v.id,
+    //     title: v.title,
+    //     start: v.start,
+    //     end:   v.end ?? undefined,
+    //     allDay: v.allDay,
+    //     extendedProps: { location: v.location, description: v.description, isBlocker: v.isBlocker },
+    //     // display: v.display,
+    //   });
+    // }
     this.showDialog = false;
   }
 
@@ -228,6 +299,7 @@ export class AppComponent {
     if (!id) return;
     const calendarApi = this.getApi();
     calendarApi!.getEventById(id)?.remove();
+    calendarApi!.getEventById(`${id}__shade`)?.remove();
     this.showDialog = false;
   }
 
@@ -244,4 +316,5 @@ export class AppComponent {
     this.currentEvents.set(events);
     this.changeDetector.detectChanges(); // workaround for pressionChangedAfterItHasBeenCheckedError
   }
+
 }

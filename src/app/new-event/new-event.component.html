@@ -17,7 +17,16 @@
     <div class="grid formgrid g-3">
       <div class="field col-12 sm:col-6 fix-h">
         <label for="title" class="block mb-1">Título*</label>
-        <input id="title" pInputText class="w-full" formControlName="title" />
+        <input id="title" pInputText class="w-full" formControlName="title"
+              [ngClass]="{'p-invalid': form.controls['title'].invalid
+              && (form.controls['title'].touched)}" />
+        <!-- разобраться с анимациями -->
+        <!-- <p-floatLabel variant="in">
+          <input id="title" pInputText formControlName="title" placeholder=" "
+          [ngClass]="{'p-invalid': form.controls['title'].invalid
+                && (form.controls['title'].touched)}" />
+          <label for="title">Título*</label>
+        </p-floatLabel> -->
         <small
           class="p-error"
           *ngIf="form.controls['title'].hasError('required')
@@ -34,10 +43,12 @@
       <div class="field col-12 sm:col-6">
         <label for="location" class="block mb-1">Ubicación</label>
         <input
+
           id="location"
           pInputText
           class="w-full"
           formControlName="location"
+          autocomplete="off"
         />
       </div>
 
@@ -54,7 +65,7 @@
 
       <div class="col-12">
         <div class="field grid g-3">
-          <div class="col-12 sm:col-6">
+          <div class="col-12 sm:col-6 fix-h">
             <label for="dateStart" class="block mb-1">Fecha inicio*</label>
             <p-calendar
               id="dateStart"
@@ -66,6 +77,12 @@
               [showButtonBar]="true"
               dateFormat="dd/mm/yy">
             </p-calendar>
+            <small
+              class="p-error"
+              *ngIf="form.controls['dateStart'].hasError('required')
+                    && form.controls['dateStart'].touched"
+              >Campo obligatorio</small
+            >
             <!-- <p-calendar
               id="dateStart"
               formControlName="dateStart"
@@ -143,6 +160,16 @@
           </div>
         </div>
       }
+
+      @if (data.mode === 'create') {
+        <div class="col-12 sm:col-6 fix-h">
+          <div class="flex align-items-center gap-2">
+            <p-inputSwitch formControlName="isBlocker" ></p-inputSwitch>
+            <label class="m-0">Blockear</label>
+          </div>
+        </div>
+      }
+
     </div>
   </form>
 
