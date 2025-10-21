@@ -63,111 +63,115 @@
         ></textarea>
       </div>
 
-      <div class="col-12">
-        <div class="field grid g-3">
-          <div class="col-12 sm:col-6 fix-h">
-            <label for="dateStart" class="block mb-1">Fecha inicio*</label>
-            <p-calendar
-              id="dateStart"
-              formControlName="dateStart"
-              [readonlyInput]="true"
-              [showIcon]="true"
-              [touchUI]="true"
-              [panelStyle]="{ minWidth: '300px', maxWidth: '420px', width: 'auto'  }"
-              [showButtonBar]="true"
-              dateFormat="dd/mm/yy">
-            </p-calendar>
-            <small
-              class="p-error"
-              *ngIf="form.controls['dateStart'].hasError('required')
-                    && form.controls['dateStart'].touched"
-              >Campo obligatorio</small
-            >
-            <!-- <p-calendar
-              id="dateStart"
-              formControlName="dateStart"
-              [readonlyInput]="true"
-              [showIcon]="true"
-              panelStyleClass="event-datepanel"
-              [touchUI]="false"
-              [monthNavigator]="true"          
-              [yearNavigator]="true"
-              [yearRange]="'2000:2035'"
-              [numberOfMonths]="1" 
-              [showButtonBar]="true"
-              dateFormat="dd/mm/yy">
-            </p-calendar> -->
-          </div>
-
-          <div class="field col-12 sm:col-6">
-            <label for="dateEnd" class="block mb-1">Fecha fin</label>
-            <p-calendar
-              id="dateEnd"
-              formControlName="dateEnd"
-              [readonlyInput]="true"
-              [showIcon]="true"
-              [touchUI]="true"
-              [panelStyle]="{ minWidth: '300px', maxWidth: '420px', width: 'auto'  }"
-              [showButtonBar]="true"
-              dateFormat="dd/mm/yy">
-            </p-calendar>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-12 sm:col-6 fix-h">
-        <div class="flex align-items-center gap-2">
-          <p-inputSwitch formControlName="allDay" (onChange)="onAllDayToggle()"></p-inputSwitch>
-          <label class="m-0">Todo el día</label>
-        </div>
-        <div>
-          <small class="p-error" *ngIf="form.hasError('range')">
-            La fecha/hora de finalización debe ser posterior al inicio
-          </small>
-        </div>
-      </div>
-
-      @if (!form.value.allDay) {
-        <div class="col-12 sm:col-6">
-          <div class="grid g-3">
-            <div class="field col-12 sm:col-6">
-              <label for="timeStart" class="block mb-1">Hora de inicio</label>
-              <p-dropdown
-                id="timeStart"
-                [options]="allTimes"
-                formControlName="timeStart"
-                [autoDisplayFirst]="false">
-                <ng-template let-opt pTemplate="item">
-                  <div>{{ opt }}</div>
-                </ng-template>
-              </p-dropdown>
+      @if (data.isAdmin) {
+        <div class="col-12">
+          <div class="field grid g-3">
+            <div class="col-12 sm:col-6 fix-h">
+              <label for="dateStart" class="block mb-1">Fecha inicio*</label>
+              <p-calendar
+                id="dateStart"
+                formControlName="dateStart"
+                [readonlyInput]="true"
+                [showIcon]="true"
+                [touchUI]="true"
+                [panelStyle]="{ minWidth: '300px', maxWidth: '420px', width: 'auto'  }"
+                [showButtonBar]="true"
+                dateFormat="dd/mm/yy">
+              </p-calendar>
+              <small
+                class="p-error"
+                *ngIf="form.controls['dateStart'].hasError('required')
+                      && form.controls['dateStart'].touched"
+                >Campo obligatorio</small
+              >
+              <!-- <p-calendar
+                id="dateStart"
+                formControlName="dateStart"
+                [readonlyInput]="true"
+                [showIcon]="true"
+                panelStyleClass="event-datepanel"
+                [touchUI]="false"
+                [monthNavigator]="true"          
+                [yearNavigator]="true"
+                [yearRange]="'2000:2035'"
+                [numberOfMonths]="1" 
+                [showButtonBar]="true"
+                dateFormat="dd/mm/yy">
+              </p-calendar> -->
             </div>
 
             <div class="field col-12 sm:col-6">
-              <label for="timeEnd" class="block mb-1">Hora de fin</label>
-              <p-dropdown
-                id="timeEnd"
-                [options]="endTimes()"
-                optionLabel="label"
-                optionValue="value"
-                formControlName="timeEnd"
-                [autoDisplayFirst]="false">
-                <ng-template let-opt pTemplate="item">
-                  <div>{{ opt.label }}</div>
-                </ng-template>
-              </p-dropdown>
+              <label for="dateEnd" class="block mb-1">Fecha fin</label>
+              <p-calendar
+                id="dateEnd"
+                formControlName="dateEnd"
+                [readonlyInput]="true"
+                [showIcon]="true"
+                [touchUI]="true"
+                [panelStyle]="{ minWidth: '300px', maxWidth: '420px', width: 'auto'  }"
+                [showButtonBar]="true"
+                dateFormat="dd/mm/yy">
+              </p-calendar>
             </div>
           </div>
         </div>
-      }
 
-      @if (data.mode === 'create') {
         <div class="col-12 sm:col-6 fix-h">
           <div class="flex align-items-center gap-2">
-            <p-inputSwitch formControlName="isBlocker" ></p-inputSwitch>
-            <label class="m-0">Blockear</label>
+            <p-inputSwitch formControlName="allDay" (onChange)="onAllDayToggle()"></p-inputSwitch>
+            <label class="m-0">Todo el día</label>
+          </div>
+          <div>
+            <small class="p-error" *ngIf="form.hasError('range')">
+              La fecha/hora de finalización debe ser posterior al inicio
+            </small>
           </div>
         </div>
+
+        @if (!form.value.allDay) {
+          <div class="col-12 sm:col-6">
+            <div class="grid g-3">
+              <div class="field col-12 sm:col-6">
+                <label for="timeStart" class="block mb-1">Hora de inicio</label>
+                <p-dropdown
+                  id="timeStart"
+                  [options]="allTimes"
+                  formControlName="timeStart"
+                  appendTo="body"
+                  [autoDisplayFirst]="false">
+                  <ng-template let-opt pTemplate="item">
+                    <div>{{ opt }}</div>
+                  </ng-template>
+                </p-dropdown>
+              </div>
+
+              <div class="field col-12 sm:col-6">
+                <label for="timeEnd" class="block mb-1">Hora de fin</label>
+                <p-dropdown
+                  id="timeEnd"
+                  [options]="endTimes()"
+                  optionLabel="label"
+                  optionValue="value"
+                  formControlName="timeEnd"
+                  appendTo="body"
+                  [autoDisplayFirst]="false">
+                  <ng-template let-opt pTemplate="item">
+                    <div>{{ opt.label }}</div>
+                  </ng-template>
+                </p-dropdown>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (data.mode === 'create') {
+          <div class="col-12">
+            <div class="flex align-items-center gap-2">
+              <p-inputSwitch formControlName="isBlocker" ></p-inputSwitch>
+              <label class="m-0">Bloquear</label>
+            </div>
+          </div>
+        }
       }
 
     </div>

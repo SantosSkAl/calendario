@@ -49,6 +49,7 @@ function rangeValidator(group: AbstractControl): ValidationErrors | null {
 
 export interface EventFormData {
   mode: 'create' | 'edit';
+  isAdmin: boolean;
   // старт/конец для создания, или данные события для редактирования:
   start?: string | Date;
   end?: string | Date | null;
@@ -82,7 +83,8 @@ export class NewEventComponent implements OnInit, AfterViewInit {
   @Output() visibleChange = new EventEmitter<boolean>();
 
   @Input() mode: 'create' | 'edit' = 'create';
-  @Input() data: EventFormData = { mode: 'create' };
+  @Input() isAdmin = true;
+  @Input() data: EventFormData = { mode: 'create', isAdmin: true };
 
   @Output() saved   = new EventEmitter<any>();
   @Output() deleted = new EventEmitter<string>();

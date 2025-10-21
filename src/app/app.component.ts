@@ -46,6 +46,8 @@ export class AppComponent {
   slot = SLOTS_PER_HOUR // 6
   slotOptions: number[] = [2, 3, 6, 12];
 
+  isAdmin = true
+
   calendarVisible = signal(true);
   calendarOptions = signal<CalendarOptions>({
     locales: [esLocale],
@@ -193,7 +195,8 @@ export class AppComponent {
     this.getApi()?.unselect();
     const { start, end, allDay } = selectInfo;
     this.dialogMode = 'create';
-    this.dialogData = { mode: 'create', start, end, allDay };
+    // console.log(this.isAdmin)
+    this.dialogData = { mode: 'create', start, end, allDay, isAdmin: this.isAdmin };
     // queueMicrotask(() => this.showDialog = true);
     this.showDialog = true;
   }
@@ -206,6 +209,7 @@ export class AppComponent {
     const e = clickInfo.event;
     this.dialogData = {
       mode: 'edit',
+      isAdmin: this.isAdmin,
       id: e.id,
       title: e.title,
       start: e.start,
